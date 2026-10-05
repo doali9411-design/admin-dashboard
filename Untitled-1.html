@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة تحكم إدارة الشركة المركزية | NetFlow Admin</title>
+  <!-- Google Fonts Cairo & Tajawal -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Cairo', 'Tajawal', 'sans-serif'],
+          },
+          colors: {
+            telecom: {
+              50: '#ecfeff',
+              100: '#cffafe',
+              200: '#a5f3fc',
+              300: '#67e8f9',
+              400: '#22d3ee',
+              500: '#06b6d4',
+              600: '#0891b2',
+              700: '#0e7490',
+              800: '#155e75',
+              900: '#164e63',
+            },
+            cyber: {
+              dark: '#0B1120',
+              card: '#131D31',
+              border: 'rgba(255, 255, 255, 0.08)',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Custom Glassmorphism & Animations Styles -->
+  <style>
+    body {
+      font-family: 'Cairo', 'Tajawal', sans-serif;
+      background-color: #0B1120;
+      color: #E2E8F0;
+      min-height: 100vh;
+    }
+    .glass-panel {
+      background: rgba(19, 29, 49, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-panel-elevated {
+      background: rgba(24, 36, 61, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(34, 211, 238, 0.2);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+    .glass-input {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      transition: all 0.2s ease-in-out;
+    }
+    .glass-input:focus {
+      border-color: #06b6d4;
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.25);
+      background: rgba(15, 23, 42, 0.85);
+      outline: none;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0B1120;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #0891b2;
+    }
+  </style>
+
+  <!-- Firebase JS SDK (Compat v10 for guaranteed browser standalone execution) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased selection:bg-cyan-500 selection:text-white">
+
+  <!-- ========================================== -->
+  <!-- 1. AUTHENTICATION VIEW (Glassmorphic Login) -->
+  <!-- ========================================== -->
+  <div id="loginSection" class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+    <!-- Ambient glowing backgrounds -->
+    <div class="absolute -top-32 -right-32 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-32 -left-32 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-sky-900/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="glass-panel-elevated w-full max-w-md p-8 rounded-3xl relative z-10 shadow-2xl">
+      <!-- Logo & Branding -->
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-tr from-cyan-600 via-sky-500 to-blue-600 shadow-lg shadow-cyan-500/30 mb-4 ring-4 ring-cyan-500/20">
+          <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <h1 class="text-2xl font-bold tracking-tight text-white mb-1">لوحة تحكم إدارة الشركة</h1>
+        <p class="text-sm text-cyan-300 font-medium">منظومة NetFlow Telecom المركزية</p>
+        <span class="inline-block mt-2 px-3 py-0.5 text-xs font-semibold rounded-full bg-cyan-950/80 text-cyan-400 border border-cyan-800/60">
+          دخول مقتصر حصرياً على الإدارة المركزية
+        </span>
+      </div>
+
+      <!-- Error / Notification Box -->
+      <div id="loginAlertBox" class="hidden mb-6 p-4 rounded-xl text-sm border font-medium"></div>
+
+      <!-- Login Form -->
+      <form id="loginForm" class="space-y-5" onsubmit="event.preventDefault(); handleLogin();">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-2">البريد الإلكتروني للإدارة</label>
+          <div class="relative">
+            <input 
+              type="email" 
+              id="adminEmailInput" 
+              required 
+              placeholder="mantime50@gmail.com" 
+              class="glass-input w-full px-4 py-3 rounded-xl text-sm text-white placeholder-slate-500 pr-11"
+              value="mantime50@gmail.com"
+            >
+            <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.206" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-2">كلمة المرور</label>
+          <div class="relative">
+            <input 
+              type="password" 
+              id="adminPasswordInput" 
+              required 
+              placeholder="••••••••" 
+              class="glass-input w-full px-4 py-3 rounded-xl text-sm text-white placeholder-slate-500 pr-11"
+            >
+            <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <button 
+          type="submit" 
+          id="loginBtn" 
+          class="w-full mt-2 py-3.5 px-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 active:scale-[0.98] text-white font-bold rounded-xl shadow-lg shadow-cyan-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <span id="loginBtnText">تسجيل الدخول إلى لوحة الإدارة</span>
+          <svg id="loginSpinner" class="hidden animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </button>
+      </form>
+
+      <div class="mt-6 text-center text-xs text-slate-400">
+        الوصول مخصص حصرياً للمدير العام (<code class="text-cyan-400">mantime50@gmail.com</code>). يتم تسجيل وتدقيق جميع محاولات الدخول.
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 2. DESKTOP ADMIN DASHBOARD VIEW            -->
+  <!-- ========================================== -->
+  <div id="dashboardSection" class="hidden min-h-screen flex flex-row">
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="w-72 bg-slate-900/90 border-l border-slate-800/80 flex flex-col justify-between shrink-0 glass-panel shadow-2xl z-20">
+      <div>
+        <!-- Sidebar Brand Header -->
+        <div class="p-6 border-b border-slate-800/60">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/30">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="font-bold text-white text-base">إدارة المنظومة</h2>
+              <p class="text-xs text-cyan-400 font-medium">NetFlow Control Hub</p>
+            </div>
+          </div>
+          <!-- Admin User Chip -->
+          <div class="mt-4 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center gap-2.5">
+            <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+            <div class="overflow-hidden">
+              <div class="text-[11px] font-semibold text-slate-200 truncate" id="sidebarAdminEmail">mantime50@gmail.com</div>
+              <div class="text-[10px] text-cyan-400">مدير عام موثق (Super Admin)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="p-4 space-y-1.5 text-sm font-semibold">
+          <!-- Overview Tab -->
+          <button 
+            onclick="switchTab('overview')" 
+            id="nav-overview" 
+            class="nav-btn w-full flex items-center justify-between px-4 py-3 rounded-xl transition text-cyan-400 bg-cyan-950/60 border border-cyan-800/40"
+          >
+            <div class="flex items-center gap-3">
+              <span class="text-lg">📊</span>
+              <span>نظرة عامة</span>
+            </div>
+          </button>
+
+          <!-- Pending Approvals Tab -->
+          <button 
+            onclick="switchTab('pending')" 
+            id="nav-pending" 
+            class="nav-btn w-full flex items-center justify-between px-4 py-3 rounded-xl transition text-slate-400 hover:text-white hover:bg-slate-800/60"
+          >
+            <div class="flex items-center gap-3">
+              <span class="text-lg">💳</span>
+              <span>طلبات التحقق والتفعيل</span>
+            </div>
+            <span id="pendingBadgeCount" class="hidden px-2 py-0.5 text-xs font-bold rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">0</span>
+          </button>
+
+          <!-- Agents Registry Tab -->
+          <button 
+            onclick="switchTab('agents')" 
+            id="nav-agents" 
+            class="nav-btn w-full flex items-center justify-between px-4 py-3 rounded-xl transition text-slate-400 hover:text-white hover:bg-slate-800/60"
+          >
+            <div class="flex items-center gap-3">
+              <span class="text-lg">👥</span>
+              <span>سجل الوكلاء</span>
+            </div>
+            <span id="agentsBadgeCount" class="px-2 py-0.5 text-xs font-medium rounded-full bg-slate-800 text-slate-400">0</span>
+          </button>
+
+          <!-- Immutable Audit Log Tab -->
+          <button 
+            onclick="switchTab('audit')" 
+            id="nav-audit" 
+            class="nav-btn w-full flex items-center justify-between px-4 py-3 rounded-xl transition text-slate-400 hover:text-white hover:bg-slate-800/60"
+          >
+            <div class="flex items-center gap-3">
+              <span class="text-lg">📜</span>
+              <span>سجل الرقابة (Audit Trail)</span>
+            </div>
+            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">محمي</span>
+          </button>
+
+          <!-- Broadcast Sender Tab -->
+          <button 
+            onclick="switchTab('broadcast')" 
+            id="nav-broadcast" 
+            class="nav-btn w-full flex items-center justify-between px-4 py-3 rounded-xl transition text-slate-400 hover:text-white hover:bg-slate-800/60"
+          >
+            <div class="flex items-center gap-3">
+              <span class="text-lg">📢</span>
+              <span>إرسال إشعار جماعي</span>
+            </div>
+          </button>
+
+          <!-- Version Control Tab -->
+          <button 
+            onclick="switchTab('version')" 
+            id="nav-version" 
+            class="nav-btn w-full flex items-center justify-between px-4 py-3 rounded-xl transition text-slate-400 hover:text-white hover:bg-slate-800/60"
+          >
+            <div class="flex items-center gap-3">
+              <span class="text-lg">🚀</span>
+              <span>إدارة الإصدارات والتحديث</span>
+            </div>
+            <span id="versionBadgeCode" class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">v1.0.1</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Sign Out Section -->
+      <div class="p-4 border-t border-slate-800/80">
+        <button 
+          onclick="handleSignOut()" 
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 font-semibold transition text-sm cursor-pointer"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          <span>تسجيل الخروج (Sign Out)</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT VIEWPORT -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto max-h-screen">
+      <!-- Top Bar -->
+      <header class="h-18 px-8 py-4 border-b border-slate-800/80 glass-panel flex items-center justify-between sticky top-0 z-10">
+        <div>
+          <h1 id="topbarTitle" class="text-xl font-bold text-white flex items-center gap-2">
+            <span>نظرة عامة وإحصائيات المنظومة</span>
+          </h1>
+          <p id="topbarSubtitle" class="text-xs text-slate-400 mt-0.5">مؤشرات الأداء المباشرة وسجلات التحقق</p>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 text-xs font-semibold">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <span>متصل بـ Firebase Live</span>
+          </div>
+
+          <div class="text-xs text-slate-400" id="liveClock">--:--:--</div>
+        </div>
+      </header>
+
+      <!-- VIEW PANELS CONTAINER -->
+      <div class="p-8 space-y-8 flex-1">
+
+        <!-- ============================================== -->
+        <!-- TAB 1: 📊 نظرة عامة (Overview Stats)           -->
+        <!-- ============================================== -->
+        <section id="tab-overview" class="space-y-8">
+          <!-- 4 Stat Cards Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Pending Card -->
+            <div class="glass-panel p-6 rounded-2xl relative overflow-hidden border border-amber-500/20">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs font-medium text-slate-400">طلبات التفعيل المعلقة</p>
+                  <h3 id="statPendingCount" class="text-3xl font-black text-amber-400 mt-2">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-2xl border border-amber-500/20">
+                  💳
+                </div>
+              </div>
+              <div class="mt-4 flex items-center text-xs text-amber-300">
+                <span>تنتظر مطابقة الحوالة والموافقة</span>
+              </div>
+            </div>
+
+            <!-- Active Agents Card -->
+            <div class="glass-panel p-6 rounded-2xl relative overflow-hidden border border-cyan-500/20">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs font-medium text-slate-400">سجل الوكلاء المسجلين</p>
+                  <h3 id="statAgentsCount" class="text-3xl font-black text-cyan-400 mt-2">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-2xl border border-cyan-500/20">
+                  👥
+                </div>
+              </div>
+              <div class="mt-4 flex items-center text-xs text-cyan-300">
+                <span>وكلاء في منظومة الأبراج والمشتركين</span>
+              </div>
+            </div>
+
+            <!-- Audit Logs Card -->
+            <div class="glass-panel p-6 rounded-2xl relative overflow-hidden border border-emerald-500/20">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs font-medium text-slate-400">عمليات الرقابة الموثقة</p>
+                  <h3 id="statAuditCount" class="text-3xl font-black text-emerald-400 mt-2">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-2xl border border-emerald-500/20">
+                  📜
+                </div>
+              </div>
+              <div class="mt-4 flex items-center text-xs text-emerald-300">
+                <span>سجل ثابت غير قابل للتعديل</span>
+              </div>
+            </div>
+
+            <!-- Broadcast Alerts Card -->
+            <div class="glass-panel p-6 rounded-2xl relative overflow-hidden border border-indigo-500/20">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs font-medium text-slate-400">التعميمات والإشعارات</p>
+                  <h3 id="statBroadcastCount" class="text-3xl font-black text-indigo-400 mt-2">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-2xl border border-indigo-500/20">
+                  📢
+                </div>
+              </div>
+              <div class="mt-4 flex items-center text-xs text-indigo-300">
+                <span>إشعارات جماعية مرسلة للهواتف</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Preview Panels: Latest Pending & Recent Activity -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Recent Pending Requests -->
+            <div class="glass-panel p-6 rounded-2xl border border-slate-800">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                  <span>💳 أحدث طلبات الدفع المعلقة</span>
+                </h3>
+                <button onclick="switchTab('pending')" class="text-xs text-cyan-400 hover:text-cyan-300 font-semibold">عرض الكل ←</button>
+              </div>
+              <div id="overviewPendingList" class="space-y-3">
+                <div class="text-center py-8 text-sm text-slate-500">لا توجد طلبات معلقة حالياً ✅</div>
+              </div>
+            </div>
+
+            <!-- Recent Audit Logs -->
+            <div class="glass-panel p-6 rounded-2xl border border-slate-800">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                  <span>📜 أحدث العمليات الرقابية المسجلة</span>
+                </h3>
+                <button onclick="switchTab('audit')" class="text-xs text-cyan-400 hover:text-cyan-300 font-semibold">عرض السجل الكامل ←</button>
+              </div>
+              <div id="overviewAuditList" class="space-y-3">
+                <div class="text-center py-8 text-sm text-slate-500">جاري تحميل سجل العمليات...</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ======================================================= -->
+        <!-- TAB 2: 💳 طلبات التحقق والتفعيل (Pending Approvals)     -->
+        <!-- ======================================================= -->
+        <section id="tab-pending" class="hidden space-y-6">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold text-white">طلبات التحقق والتفعيل المعلقة</h2>
+              <p class="text-xs text-slate-400 mt-1">مطابقة حوالات الزين كاش والكي كارد وتفعيل اشتراكات الوكلاء فورياً</p>
+            </div>
+            <!-- Search & Filters -->
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+              <input 
+                type="text" 
+                id="searchPendingInput" 
+                oninput="renderPendingTable()" 
+                placeholder="بحث برقم الحوالة أو البريد..." 
+                class="glass-input px-4 py-2 rounded-xl text-xs text-white placeholder-slate-500 w-full sm:w-64"
+              >
+            </div>
+          </div>
+
+          <!-- Pending Requests Table -->
+          <div class="glass-panel rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+              <table class="w-full text-right text-xs">
+                <thead class="bg-slate-900/90 text-slate-400 uppercase text-[11px] border-b border-slate-800">
+                  <tr>
+                    <th class="px-6 py-4">البريد الإلكتروني للوكيل</th>
+                    <th class="px-6 py-4">نوع الباقة</th>
+                    <th class="px-6 py-4">المبلغ</th>
+                    <th class="px-6 py-4">طريقة الدفع</th>
+                    <th class="px-6 py-4">رقم الحوالة / المعاملة</th>
+                    <th class="px-6 py-4">تاريخ الإرسال</th>
+                    <th class="px-6 py-4 text-center">الإجراءات والقرارات</th>
+                  </tr>
+                </thead>
+                <tbody id="pendingTableBody" class="divide-y divide-slate-800/60 font-medium">
+                  <tr>
+                    <td colspan="7" class="text-center py-12 text-slate-500 text-sm">
+                      جاري فحص الطلبات المعلقة...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- TAB 3: 👥 سجل الوكلاء (Agents Registry)       -->
+        <!-- ============================================== -->
+        <section id="tab-agents" class="hidden space-y-6">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold text-white">سجل الوكلاء ومنظومة الاشتراكات</h2>
+              <p class="text-xs text-slate-400 mt-1">قائمة الوكلاء وحالة تفعيل التراخيص وتاريخ الانتهاء</p>
+            </div>
+            <input 
+              type="text" 
+              id="searchAgentsInput" 
+              oninput="renderAgentsTable()" 
+              placeholder="بحث بالبريد أو الاسم..." 
+              class="glass-input px-4 py-2 rounded-xl text-xs text-white placeholder-slate-500 w-full sm:w-64"
+            >
+          </div>
+
+          <div class="glass-panel rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+              <table class="w-full text-right text-xs">
+                <thead class="bg-slate-900/90 text-slate-400 uppercase text-[11px] border-b border-slate-800">
+                  <tr>
+                    <th class="px-6 py-4">الوكيل / البريد الإلكتروني</th>
+                    <th class="px-6 py-4">حالة الاشتراك</th>
+                    <th class="px-6 py-4">نوع الباقة</th>
+                    <th class="px-6 py-4">تاريخ انتهاء الترخيص</th>
+                    <th class="px-6 py-4">إجمالي المشتركين</th>
+                    <th class="px-6 py-4 text-center">الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody id="agentsTableBody" class="divide-y divide-slate-800/60 font-medium">
+                  <tr>
+                    <td colspan="6" class="text-center py-12 text-slate-500 text-sm">
+                      جاري تحميل بيانات الوكلاء...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- TAB 4: 📜 سجل الرقابة (Immutable Audit Log)   -->
+        <!-- ============================================== -->
+        <section id="tab-audit" class="hidden space-y-6">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-xl font-bold text-white">سجل الرقابة والأمان غير القابل للتعديل</h2>
+                <span class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                  Immutable Audit Log
+                </span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">توثيق ثابت لكل إجراء إداري، تفعيل اشتراك، رفض طلب، وتحديث مشتركين بدون أي خيار للحذف</p>
+            </div>
+
+            <!-- Filters -->
+            <div class="flex items-center gap-3">
+              <select 
+                id="auditActionFilter" 
+                onchange="renderAuditTable()" 
+                class="glass-input px-3 py-2 rounded-xl text-xs text-slate-200"
+              >
+                <option value="ALL">جميع الإجراءات (All Actions)</option>
+                <option value="SUBSCRIPTION_ACTIVATED">تفعيل اشتراك (SUBSCRIPTION_ACTIVATED)</option>
+                <option value="PAYMENT_REJECTED">رفض طلب دفع (PAYMENT_REJECTED)</option>
+                <option value="AGENT_REGISTERED">تسجيل وكيل (AGENT_REGISTERED)</option>
+                <option value="ACCOUNT_SUSPENDED">تجميد حساب (ACCOUNT_SUSPENDED)</option>
+                <option value="PLAN_EXTENDED">تمديد باقة (PLAN_EXTENDED)</option>
+                <option value="SUBSCRIBER_UPDATED">تحديث مشترك / نظام (SUBSCRIBER_UPDATED)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Audit Log Table -->
+          <div class="glass-panel rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+              <table class="w-full text-right text-xs">
+                <thead class="bg-slate-900/90 text-slate-400 uppercase text-[11px] border-b border-slate-800">
+                  <tr>
+                    <th class="px-6 py-4">رقم القيد (Log ID)</th>
+                    <th class="px-6 py-4">نوع الإجراء</th>
+                    <th class="px-6 py-4">المنفذ (Admin)</th>
+                    <th class="px-6 py-4">الوكيل المستهدف</th>
+                    <th class="px-6 py-4">التفاصيل والبيان</th>
+                    <th class="px-6 py-4">التاريخ والوقت</th>
+                  </tr>
+                </thead>
+                <tbody id="auditTableBody" class="divide-y divide-slate-800/60 font-medium">
+                  <tr>
+                    <td colspan="6" class="text-center py-12 text-slate-500 text-sm">
+                      جاري تحميل السجل الرقابي...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- TAB 5: 📢 إرسال إشعار جماعي (Broadcast Sender) -->
+        <!-- ============================================== -->
+        <section id="tab-broadcast" class="hidden space-y-8">
+          <div>
+            <h2 class="text-xl font-bold text-white">إرسال تعميم وإشعار جماعي لجميع الهواتف</h2>
+            <p class="text-xs text-slate-400 mt-1">يظهر الإشعار فوراً كنافذة منبثقة ملزمة داخل تطبيق كل وكيل مع إشعار بنظام الهاتف</p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Broadcast Creator Form -->
+            <div class="lg:col-span-1 glass-panel p-6 rounded-2xl border border-slate-800 shadow-xl space-y-5">
+              <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                <span>📝 إنشاء تعميم جديد</span>
+              </h3>
+
+              <div id="broadcastAlertBox" class="hidden p-3 rounded-xl text-xs font-semibold"></div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">عنوان التنبيه</label>
+                <input 
+                  type="text" 
+                  id="broadcastTitleInput" 
+                  placeholder="مثال: تنبيه هام / صيانة المنظومة" 
+                  class="glass-input w-full px-4 py-2.5 rounded-xl text-xs text-white placeholder-slate-500"
+                >
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">درجة الأهمية والأولوية</label>
+                <select id="broadcastPriorityInput" class="glass-input w-full px-4 py-2.5 rounded-xl text-xs text-white">
+                  <option value="NORMAL">عادي (Normal Broadcast)</option>
+                  <option value="HIGH">عالي الأهمية / طوارئ (High Priority Alert)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">نص الرسالة والتعميم</label>
+                <textarea 
+                  id="broadcastMessageInput" 
+                  rows="4" 
+                  placeholder="سوف يتم إيقاف الخدمة لأغراض التحديث والصيانة من الساعة X إلى Y..." 
+                  class="glass-input w-full px-4 py-2.5 rounded-xl text-xs text-white placeholder-slate-500 resize-none"
+                ></textarea>
+              </div>
+
+              <button 
+                onclick="sendBroadcastMessage()" 
+                id="sendBroadcastBtn"
+                class="w-full py-3 px-4 bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-400 hover:to-cyan-400 active:scale-95 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition text-xs flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>📢 بث الإشعار فوراً لجميع الهواتف</span>
+              </button>
+            </div>
+
+            <!-- Broadcasts History Table -->
+            <div class="lg:col-span-2 glass-panel p-6 rounded-2xl border border-slate-800 shadow-xl space-y-4">
+              <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                <span>📋 أرشيف التعميمات المرسلة</span>
+              </h3>
+
+              <div class="overflow-x-auto">
+                <table class="w-full text-right text-xs">
+                  <thead class="bg-slate-900/90 text-slate-400 uppercase text-[11px] border-b border-slate-800">
+                    <tr>
+                      <th class="px-4 py-3">العنوان</th>
+                      <th class="px-4 py-3">نص التعميم</th>
+                      <th class="px-4 py-3">الأولوية</th>
+                      <th class="px-4 py-3">تاريخ الإرسال</th>
+                      <th class="px-4 py-3">الحالة</th>
+                    </tr>
+                  </thead>
+                  <tbody id="broadcastsTableBody" class="divide-y divide-slate-800/60 font-medium">
+                    <tr>
+                      <td colspan="5" class="text-center py-8 text-slate-500">جاري تحميل التعميمات...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- TAB 6: 🚀 إدارة الإصدارات والتحديث (Version Control) -->
+        <!-- ============================================== -->
+        <section id="tab-version" class="hidden space-y-8">
+          <div>
+            <h2 class="text-xl font-bold text-white">محرك التحكم بإصدارات المنظومة والتحديث الإلزامي</h2>
+            <p class="text-xs text-slate-400 mt-1">تحديد رقم الإصدار الإلزامي وفرض شاشة القفل الإجباري على هواتف الوكلاء التي لم تُحدث</p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Form Card -->
+            <div class="lg:col-span-2 glass-panel p-6 rounded-2xl border border-slate-800 shadow-xl space-y-5">
+              <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                  <span>⚙️ إعدادات الإصدار في Firebase (<code>app_system/version_control</code>)</span>
+                </h3>
+                <span id="versionStatusPill" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  متزامن مع السحابة
+                </span>
+              </div>
+
+              <div id="versionAlertBox" class="hidden p-3 rounded-xl text-xs font-semibold"></div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-300 mb-1.5">اسم الإصدار الأحدث (Version Name)</label>
+                  <input 
+                    type="text" 
+                    id="versionNameInput" 
+                    placeholder="1.0.1" 
+                    class="glass-input w-full px-4 py-2.5 rounded-xl text-xs text-white placeholder-slate-500 font-mono"
+                  >
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-slate-300 mb-1.5">كود الإصدار الأحدث (Latest Version Code)</label>
+                  <input 
+                    type="number" 
+                    id="versionCodeInput" 
+                    placeholder="2" 
+                    class="glass-input w-full px-4 py-2.5 rounded-xl text-xs text-white placeholder-slate-500 font-mono"
+                  >
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">الحد الأدنى الإلزامي (Min Required Version Code)</label>
+                <input 
+                  type="number" 
+                  id="minVersionCodeInput" 
+                  placeholder="2" 
+                  class="glass-input w-full px-4 py-2.5 rounded-xl text-xs text-white placeholder-slate-500 font-mono"
+                >
+                <p class="text-[11px] text-slate-400 mt-1">أي تطبيق يحمل كود إصدار أقل من هذا الرقم سيتم إيقافه وقفله بشاشة التحديث الإجباري فورياً.</p>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">رابط تحميل ملف APK أو المتجر (APK Download URL)</label>
+                <input 
+                  type="url" 
+                  id="apkUrlInput" 
+                  placeholder="https://example.com/netflow.apk" 
+                  class="glass-input w-full px-4 py-2.5 rounded-xl text-xs text-white placeholder-slate-500"
+                >
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">سجل التغييرات وملاحظات التحديث (Release Notes)</label>
+                <textarea 
+                  id="releaseNotesInput" 
+                  rows="3" 
+                  placeholder="تحسينات هامة وإصلاحات أمنية للنظام ومزامنة المشتركين..." 
+                  class="glass-input w-full px-4 py-2.5 rounded-xl text-xs text-white placeholder-slate-500 resize-none"
+                ></textarea>
+              </div>
+
+              <!-- Force Update Toggle -->
+              <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                    <span>🚨 تفعيل فرض التحديث الإجباري (is_force_update)</span>
+                  </div>
+                  <div class="text-[11px] text-slate-400 mt-0.5">عند تفعيله، لن يتمكن أي وكيل من الدخول حتى يقوم بتحديث التطبيق.</div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="isForceUpdateCheckbox" class="sr-only peer">
+                  <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600"></div>
+                </label>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <button 
+                  onclick="saveVersionControlConfig()" 
+                  id="saveVersionBtn"
+                  class="flex-1 py-3 px-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 active:scale-95 text-white font-bold rounded-xl shadow-lg shadow-cyan-500/25 transition text-xs flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span>💾 حفظ وتطبيق إعدادات الإصدار فورياً</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Live Status Card -->
+            <div class="lg:col-span-1 glass-panel p-6 rounded-2xl border border-slate-800 shadow-xl space-y-4">
+              <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                <span>📱 الحالة المباشرة للنظام</span>
+              </h3>
+
+              <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3 text-xs">
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-400">الإصدار الأخير المعلن:</span>
+                  <span id="previewLatestVersion" class="font-bold text-cyan-400 font-mono">v1.0.1</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-400">كود الإصدار الأخير:</span>
+                  <span id="previewLatestCode" class="font-bold text-white font-mono">2</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-400">الحد الأدنى الإلزامي:</span>
+                  <span id="previewMinCode" class="font-bold text-amber-400 font-mono">2</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-400">حالة الإجبار:</span>
+                  <span id="previewForceStatus" class="font-bold text-rose-400">نشط (إلزامي)</span>
+                </div>
+              </div>
+
+              <div class="p-4 rounded-xl bg-cyan-950/30 border border-cyan-800/40 text-xs text-cyan-300 leading-relaxed">
+                💡 فور الضغط على زر الحفظ، يتم تحديث المستند <code class="text-white font-mono">app_system/version_control</code> في Firestore، وتقوم محركات الهواتف بإظهار شاشة القفل الإجباري فورياً للأجهزة غير المحدثة.
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: Reject Request with reason              -->
+  <!-- ============================================== -->
+  <div id="rejectModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+    <div class="glass-panel-elevated w-full max-w-md p-6 rounded-2xl border border-rose-500/30 shadow-2xl">
+      <h3 class="text-base font-bold text-rose-400 flex items-center gap-2 mb-2">
+        <span>❌ رفض طلب تفعيل الاشتراك</span>
+      </h3>
+      <p class="text-xs text-slate-300 mb-4" id="rejectModalDesc">هل أنت متأكد من رفض الطلب؟</p>
+
+      <div class="mb-4">
+        <label class="block text-xs font-semibold text-slate-400 mb-1">سبب الرفض (اختياري، يظهر للوكيل):</label>
+        <input 
+          type="text" 
+          id="rejectReasonInput" 
+          placeholder="مثال: رقم الحوالة غير مطابق، أو المبلغ ناقص" 
+          class="glass-input w-full px-3 py-2 rounded-xl text-xs text-white placeholder-slate-500"
+        >
+      </div>
+
+      <div class="flex items-center justify-end gap-3">
+        <button 
+          onclick="closeRejectModal()" 
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition"
+        >
+          إلغاء
+        </button>
+        <button 
+          id="confirmRejectBtn" 
+          onclick="confirmRejectAction()" 
+          class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 transition"
+        >
+          تأكيد الرفض
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: Receipt Image Viewer                    -->
+  <!-- ============================================== -->
+  <div id="receiptModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md" onclick="closeReceiptModal()">
+    <div class="relative max-w-2xl max-h-[90vh] bg-slate-900 p-2 rounded-2xl border border-slate-700 shadow-2xl" onclick="event.stopPropagation()">
+      <button onclick="closeReceiptModal()" class="absolute top-4 left-4 p-2 rounded-full bg-slate-800 text-white hover:bg-slate-700">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      <img id="receiptModalImg" src="" alt="وصل الحوالة" class="max-h-[80vh] w-auto rounded-xl object-contain mx-auto">
+    </div>
+  </div>
+
+  <!-- Web App Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
