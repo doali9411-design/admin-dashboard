@@ -243,8 +243,7 @@ const SUBSCRIPTION_DAYS = 30;
 
 const C = { USERS:"users", PAY:"payment_requests", BC:"system_broadcasts", AUDIT:"audit_logs" };
 const VER = ["app_system","version_control"];
-const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getFirestore(app);
-const $ = (s,r=document) => r.querySelector(s), $$ = (s,r=document) => [...r.querySelectorAll(s)];
+const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getFirestore(app, "ai-studio-netfluoadminagen-472f1dd6-1fad-4622-b483-3bdc51a7bd41");const $ = (s,r=document) => r.querySelector(s), $$ = (s,r=document) => [...r.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmt = ts => ts?.toDate ? ts.toDate().toLocaleString("ar-IQ",{dateStyle:"medium",timeStyle:"short"}) : "—";
 const fmtD = ts => ts?.toDate ? ts.toDate().toLocaleDateString("ar-IQ",{dateStyle:"medium"}) : "—";
