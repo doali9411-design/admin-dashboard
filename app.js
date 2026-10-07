@@ -212,11 +212,14 @@ function initRealtimeData() {
         pendingRequests.push({ id: doc.id, ...doc.data() });
       });
 
-      // Sort by creation time desc
+      // Sort by creation / submission time desc
       pendingRequests.sort((a, b) => {
-        const timeA = a.created_at ? (a.created_at.toMillis ? a.created_at.toMillis() : a.created_at) : 0;
-        const timeB = b.created_at ? (b.created_at.toMillis ? b.created_at.toMillis() : b.created_at) : 0;
-        return timeB - timeA;
+        const getT = (item) => {
+          const t = item.submittedAt || item.created_at || item.timestamp;
+          if (!t) return 0;
+          return t.toMillis ? t.toMillis() : (typeof t === 'number' ? t : 0);
+        };
+        return getT(b) - getT(a);
       });
 
       updatePendingBadge();
@@ -316,8 +319,8 @@ function renderPendingTable() {
     const isPending = (req.status || 'PENDING').toUpperCase() === 'PENDING';
     if (!isPending) return false;
     if (!searchTerm) return true;
-    const email = (req.email || '').toLowerCase();
-    const txId = (req.transaction_id || '').toLowerCase();
+    const email = (req.agentEmail || req.email || '').toLowerCase();
+    const txId = (req.transactionId || req.transaction_id || '').toLowerCase();
     return email.includes(searchTerm) || txId.includes(searchTerm);
   });
 
@@ -334,25 +337,28 @@ function renderPendingTable() {
   }
 
   tbody.innerHTML = filtered.map(req => {
-    const planName = getPlanArabicName(req.plan_type);
+    const planName = getPlanArabicName(req.plan_type || 'MONTHLY');
     const amount = Number(req.amount_iqd || 10000).toLocaleString('ar-IQ') + ' د.ع';
     const method = req.payment_method === 'ZAIN_CASH' ? 'زين كاش' : 'حساب QI';
-    const txId = req.transaction_id || 'غير متوفر';
-    const timeStr = formatTimestamp(req.created_at);
+    const txId = req.transactionId || req.transaction_id || 'غير متوفر';
+    const timeStr = formatTimestamp(req.submittedAt || req.created_at || req.timestamp);
+    const emailVal = req.agentEmail || req.email || '';
+    const uidVal = req.agentUid || req.uid || 'N/A';
+    const discountVal = req.discountCode || req.discount_code;
     const receiptBtn = req.receipt_url
       ? `<button onclick="viewReceipt('${encodeURIComponent(req.receipt_url)}')" class="inline-flex items-center gap-1 text-[11px] text-cyan-400 hover:text-cyan-300 font-semibold mt-1">
           <span>🖼️ معاينة الوصل</span>
          </button>`
       : '';
-    const discountBadge = req.discount_code
-      ? `<div class="mt-1"><span class="px-2 py-0.5 text-[10px] font-bold rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">🏷️ كود: ${escapeHtml(req.discount_code)}</span></div>`
+    const discountBadge = discountVal
+      ? `<div class="mt-1"><span class="px-2 py-0.5 text-[10px] font-bold rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">🏷️ كود: ${escapeHtml(discountVal)}</span></div>`
       : '';
 
     return `
       <tr class="hover:bg-slate-800/40 transition">
         <td class="px-6 py-4">
-          <div class="font-bold text-white text-xs">${escapeHtml(req.email || '')}</div>
-          <div class="text-[10px] text-slate-500 font-mono mt-0.5">UID: ${escapeHtml(req.uid || 'N/A')}</div>
+          <div class="font-bold text-white text-xs">${escapeHtml(emailVal)}</div>
+          <div class="text-[10px] text-slate-500 font-mono mt-0.5">UID: ${escapeHtml(uidVal)}</div>
         </td>
         <td class="px-6 py-4">
           <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20">
@@ -454,6 +460,7 @@ async function approvePaymentRequest(requestId) {
     const subData = {
       email: cleanEmail,
       is_subscribed: true,
+      subscriptionStatus: "ACTIVE",
       subscription_expiry_timestamp: firebase.firestore.Timestamp.fromDate(expiryDate),
       subscription_end_timestamp: firebase.firestore.Timestamp.fromDate(expiryDate),
       subscriptionExpiryAt: expiryMs,
@@ -467,9 +474,10 @@ async function approvePaymentRequest(requestId) {
 
     // Update in users & app_subscriptions
     await db.collection("users").document(emailHash).set(subData, { merge: true });
-    if (req.uid) {
-      await db.collection("users").document(req.uid).set(subData, { merge: true });
-      await db.collection("app_subscriptions").document(req.uid).set(subData, { merge: true });
+    const targetUid = req.agentUid || req.uid;
+    if (targetUid) {
+      await db.collection("users").document(targetUid).set(subData, { merge: true });
+      await db.collection("app_subscriptions").document(targetUid).set(subData, { merge: true });
     }
     await db.collection("app_subscriptions").document(emailHash).set(subData, { merge: true });
 
@@ -658,6 +666,7 @@ async function grantDirectAgentSubscription(email, uid) {
       subscription_end_timestamp: firebase.firestore.Timestamp.fromDate(expiryDate),
       subscriptionExpiryAt: expiryMs,
       status: "ACTIVE",
+      subscriptionStatus: "ACTIVE",
       plan_type: days >= 365 ? "ANNUAL" : (days >= 180 ? "SEMI_ANNUAL" : "MONTHLY"),
       activated_at: firebase.firestore.FieldValue.serverTimestamp(),
       activated_by: adminEmail,
