@@ -634,6 +634,7 @@ const STATIC_I18N = {
 "مفعّل":"Enabled","غير مفعّل":"Disabled","رفض الطلب":"Reject request","تأكيد الرفض":"Confirm rejection","إلغاء":"Cancel",
 "سبب الرفض (يظهر للوكيل)":"Rejection reason (shown to agent)","وصل الحوالة":"Payment receipt","إغلاق":"Close"
 };
+const _i18nOrig = new WeakMap();
 const translateStaticText=()=>{
   const reverse=Object.fromEntries(Object.entries(STATIC_I18N).map(([a,e])=>[e,a]));
   const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
@@ -641,9 +642,9 @@ const translateStaticText=()=>{
   nodes.forEach(n=>{
     if(!n.parentElement || n.parentElement.closest("script,style")) return;
     const v=n.nodeValue.trim(); if(!v) return;
-    const original=n.dataset?.i18nOriginal || (STATIC_I18N[v] ? v : reverse[v]);
+    const original=_i18nOrig.get(n) || (STATIC_I18N[v] ? v : reverse[v]);
     if(!original) return;
-    n.dataset.i18nOriginal=original;
+    _i18nOrig.set(n,original);
     const translated=lang==="ar"?original:(STATIC_I18N[original]||original);
     n.nodeValue=n.nodeValue.replace(v,translated);
   });
