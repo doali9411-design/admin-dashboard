@@ -185,6 +185,7 @@ label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px}
         <option value="PAYMENT_REJECTED">رفض طلب دفع</option>
         <option value="PLAN_EXTENDED">تمديد اشتراك</option>
         <option value="ACCOUNT_SUSPENDED">تجميد حساب</option>
+        <option value="ACCOUNT_UNSUSPENDED">رفع التجميد</option>
         <option value="BROADCAST_SENT">إرسال تعميم</option>
         <option value="VERSION_UPDATED">تحديث الإصدار</option>
       </select></div>
@@ -249,7 +250,7 @@ const fmt = ts => ts?.toDate ? ts.toDate().toLocaleString("ar-IQ",{dateStyle:"me
 const fmtD = ts => ts?.toDate ? ts.toDate().toLocaleDateString("ar-IQ",{dateStyle:"medium"}) : "—";
 const LBL = { PENDING:"بانتظار القرار", APPROVED:"مقبول", REJECTED:"مرفوض", ACTIVE:"فعّال", EXPIRED:"منتهي", SUSPENDED:"مجمّد", ADMIN:"مدير", AGENT:"وكيل", NORMAL:"عادي", HIGH:"عاجل" };
 const tag = v => `<span class="tag t-${esc(v)}">${LBL[v] || esc(v || "—")}</span>`;
-const ACTIONS = { SUBSCRIPTION_ACTIVATED:"تفعيل اشتراك", PAYMENT_REJECTED:"رفض طلب", PLAN_EXTENDED:"تمديد اشتراك", ACCOUNT_SUSPENDED:"تجميد حساب", BROADCAST_SENT:"إرسال تعميم", VERSION_UPDATED:"تحديث الإصدار", AGENT_REGISTERED:"تسجيل وكيل" };
+const ACTIONS = { SUBSCRIPTION_ACTIVATED:"تفعيل اشتراك", PAYMENT_REJECTED:"رفض طلب", PLAN_EXTENDED:"تمديد اشتراك", ACCOUNT_SUSPENDED:"تجميد حساب", BROADCAST_SENT:"إرسال تعميم", VERSION_UPDATED:"تحديث الإصدار", AGENT_REGISTERED:"تسجيل وكيل", ACCOUNT_UNSUSPENDED:"رفع التجميد" };
 
 const S = { pay:[], users:[], audit:[], bc:[], ver:null, filter:"PENDING", me:null, unsubs:[], rejectId:null };
 const TITLES = {
@@ -324,6 +325,7 @@ function listen(){
   const sub = (col, f, n, key) => S.unsubs.push(
     onSnapshot(query(collection(db, col), limit(n)), s => {
       S[key] = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => getSec(b, f) - getSec(a, f));
+      if (key === "users") { S.allUsers = S[key]; S[key] = dedupeUsers(S[key]); }
       ok(); 
       renderAll();
     }, bad)
@@ -384,9 +386,9 @@ function renderPayments(){
 function renderAgents(){
   const q=$("#agent-q").value.trim().toLowerCase(); const list=S.users.filter(u=>!q||(u.email||"").toLowerCase().includes(q));
   $("#agent-list").innerHTML=list.length?`<table><thead><tr><th>البريد</th><th>الاشتراك</th><th>الباقة</th><th>ينتهي في</th><th>المشتركون</th><th>آخر دخول</th><th></th></tr></thead><tbody>`+
-  list.map(u=>`<tr><td>${esc(u.email)}${u.role==="ADMIN"?" "+tag("ADMIN"):""}</td><td>${tag(u.subscriptionStatus||u.status||"EXPIRED")}</td><td>${esc(u.planType||u.plan_type||"—")}</td><td class="muted">${fmtD(u.subscriptionEndsAt||u.subscription_expiry_timestamp)}</td>
+  list.map(u=>`<tr><td>${esc(u.email)}${u.role==="ADMIN"?" "+tag("ADMIN"):""}</td><td>${tag(isSusp(u)?"SUSPENDED":(u.subscriptionStatus||u.status||"EXPIRED"))}</td><td>${esc(u.planType||u.plan_type||"—")}</td><td class="muted">${fmtD(u.subscriptionEndsAt||u.subscription_expiry_timestamp)}</td>
     <td>${esc(u.subscribersCount ?? "—")}</td><td class="muted">${fmt(u.lastLoginAt)}</td>
-    <td>${u.role==="ADMIN"?"":`<div class="row-actions"><button class="btn sm ok" data-act="extend" data-id="${esc(u.id)}">تمديد ${SUBSCRIPTION_DAYS} يوماً</button>${(u.subscriptionStatus||u.status)==="SUSPENDED"?"":`<button class="btn sm bad" data-act="suspend" data-id="${esc(u.id)}">تجميد</button>`}</div>`}</td></tr>`).join("")+"</tbody></table>"
+    <td>${u.role==="ADMIN"?"":`<div class="row-actions"><button class="btn sm ok" data-act="extend" data-id="${esc(u.id)}">تمديد ${SUBSCRIPTION_DAYS} يوماً</button>${isSusp(u)?`<button class="btn sm ok" data-act="unsuspend" data-id="${esc(u.id)}">رفع التجميد</button>`:`<button class="btn sm bad" data-act="suspend" data-id="${esc(u.id)}">تجميد</button>`}</div>`}</td></tr>`).join("")+"</tbody></table>"
   :`<div class="empty">لا يوجد وكلاء مطابقون.</div>`;
 }
 function logRow(l){ return `<div class="log"><span class="dot"></span><div><div>${esc(l.details||ACTIONS[l.action]||l.action)}</div><div class="muted">${esc(l.by)} · ${fmt(l.at)}</div></div></div>`; }
@@ -417,7 +419,11 @@ const logTo=(b,action,details,target)=>{ const d={action,details,target:target||
   if(b) b.set(doc(collection(db,C.AUDIT)),d); else return addDoc(collection(db,C.AUDIT),d); };
 const busy=async(btn,fn)=>{ btn&&(btn.disabled=true); try{ await fn(); }catch(e){ console.error(e); toast("تعذّر تنفيذ العملية. تحقق من الصلاحيات.",true); } btn&&(btn.disabled=false); };
 const addDays=n=>Timestamp.fromDate(new Date(Date.now()+n*864e5));
-
+const planKey = p => String(p.planType || p.plan_type || p.plan || "MONTHLY").toUpperCase();
+const planDays = p => { const d = Number(p.durationDays ?? p.duration_days); return d > 0 ? d : (planKey(p) === "ANNUAL" ? 365 : planKey(p) === "SEMI_ANNUAL" ? 180 : SUBSCRIPTION_DAYS); };
+const docsOf = u => { const e = (u.email || "").toLowerCase(); const l = (S.allUsers || []).filter(x => (x.email || "").toLowerCase() === e); return l.length ? l : [u]; };
+const isSusp = u => u.is_suspended === true || (u.subscriptionStatus || u.status) === "SUSPENDED";
+function dedupeUsers(list){ const m = new Map(); for (const u of list){ const k = (u.email || u.id).toLowerCase(); const cur = m.get(k); if (!cur || (u.uid && u.uid === u.id)) m.set(k, u); } return [...m.values()]; }
 async function approve(p){
   const email = p.agentEmail || p.email || "الوكيل";
   const txId = p.transactionId || p.transaction_id || "";
@@ -427,7 +433,8 @@ async function approve(p){
 
   const b=writeBatch(db);
   const nowMs = Date.now();
-  const expiryMs = nowMs + (SUBSCRIPTION_DAYS * 864e5);
+  const days = planDays(p);
+const expiryMs = nowMs + (days * 864e5);
   const expiryTs = Timestamp.fromDate(new Date(expiryMs));
 
   b.update(doc(db,C.PAY,p.id),{
@@ -447,6 +454,7 @@ async function approve(p){
       subscriptionEndsAt:expiryTs,
       subscription_expiry_timestamp:expiryTs,
       subscriptionExpiryAt:expiryMs,
+      planType:planKey(p), plan_type:planKey(p), duration_days:days,
       activated_at:serverTimestamp(),
       activated_by:S.me.email
     },{merge:true});
@@ -461,7 +469,7 @@ async function reject(){
   const b=writeBatch(db);
   b.update(doc(db,C.PAY,p.id),{
     status:"REJECTED",
-    rejectReason:reason,
+   rejectReason:reason, reject_reason:reason, rejected_at:serverTimestamp(), rejected_by:S.me.email,
     reviewedAt:serverTimestamp(),
     reviewedBy:S.me.email
   });
@@ -484,15 +492,24 @@ document.addEventListener("click",e=>{
     $("#reject-reason").focus(); 
   }
   else if(act==="receipt"&&p){ const url=p.receiptUrl||p.receiptImage; if(/^https:\/\//.test(url)){ $("#receipt-img").src=url; $("#receipt-modal").classList.remove("hidden"); } else toast("رابط الوصل غير صالح",true); }
-  else if(act==="extend"&&u) busy(btn,async()=>{
+    else if(act==="extend"&&u) busy(btn,async()=>{
     if(!confirm(`تمديد اشتراك ${u.email} ${SUBSCRIPTION_DAYS} يوماً؟`)) return;
-    const base=u.subscriptionEndsAt?.toDate&&u.subscriptionEndsAt.toDate()>new Date()?u.subscriptionEndsAt.toDate():new Date();
-    const b=writeBatch(db); b.update(doc(db,C.USERS,u.id),{subscriptionStatus:"ACTIVE",subscriptionEndsAt:Timestamp.fromDate(new Date(base.getTime()+SUBSCRIPTION_DAYS*864e5))});
+    const cur=u.subscriptionEndsAt?.toDate?.(); const base=cur&&cur>new Date()?cur:new Date();
+    const ends=Timestamp.fromDate(new Date(base.getTime()+SUBSCRIPTION_DAYS*864e5));
+    const b=writeBatch(db);
+    docsOf(u).forEach(d=>b.set(doc(db,C.USERS,d.id),{subscriptionStatus:"ACTIVE",status:"ACTIVE",is_subscribed:true,is_suspended:false,subscriptionEndsAt:ends,subscription_expiry_timestamp:ends,subscriptionExpiryAt:ends.toMillis()},{merge:true}));
     logTo(b,"PLAN_EXTENDED",`تمديد اشتراك ${u.email} ${SUBSCRIPTION_DAYS} يوماً`,u.email); await b.commit(); toast("تم التمديد"); });
   else if(act==="suspend"&&u) busy(btn,async()=>{
     if(!confirm(`تجميد حساب ${u.email}؟`)) return;
-    const b=writeBatch(db); b.update(doc(db,C.USERS,u.id),{subscriptionStatus:"SUSPENDED"});
+    const b=writeBatch(db);
+    docsOf(u).forEach(d=>b.set(doc(db,C.USERS,d.id),{subscriptionStatus:"SUSPENDED",status:"SUSPENDED",is_suspended:true,suspended_reason:"إجراء إداري",suspended_by:S.me.email,suspended_updated_at:serverTimestamp()},{merge:true}));
     logTo(b,"ACCOUNT_SUSPENDED",`تجميد حساب ${u.email}`,u.email); await b.commit(); toast("تم التجميد"); });
+  else if(act==="unsuspend"&&u) busy(btn,async()=>{
+    if(!confirm(`رفع التجميد عن ${u.email}؟`)) return;
+    const live=(u.subscriptionEndsAt?.toDate?.()||new Date(0))>new Date(); const st=live?"ACTIVE":"EXPIRED";
+    const b=writeBatch(db);
+    docsOf(u).forEach(d=>b.set(doc(db,C.USERS,d.id),{subscriptionStatus:st,status:st,is_subscribed:live,is_suspended:false,suspended_reason:"",suspended_updated_at:serverTimestamp()},{merge:true}));
+    logTo(b,"ACCOUNT_UNSUSPENDED",`رفع التجميد عن ${u.email}`,u.email); await b.commit(); toast("تم رفع التجميد"); });
   else if(act==="toggle-bc"){ const x=S.bc.find(b=>b.id===id); if(x) busy(btn,()=>setDoc(doc(db,C.BC,id),{active:x.active===false},{merge:true})); }
 });
 $("#reject-ok").onclick=e=>busy(e.target,reject);
