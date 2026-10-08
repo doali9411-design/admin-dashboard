@@ -1,6 +1,7 @@
-// extras.js — إضافات لوحة NetFlow: الإعدادات (مظهر + كلمة مرور)، حذف الوكيل، عدد مشتركي كل وكيل
+// extras.js — إضافات لوحة NetFlow: عدد مشتركي كل وكيل + زر حذف الوكيل
+// (الإعدادات والمظهر واللغة وكلمة المرور والمدراء موجودة أصلاً داخل index.html)
 import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, collection, getDocs, getCountFromServer, doc, writeBatch, addDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const DB_ID = "ai-studio-netfluoadminagen-472f1dd6-1fad-4622-b483-3bdc51a7bd41";
@@ -12,68 +13,6 @@ function toast(m, err = false) {
   t.textContent = m; t.className = "show" + (err ? " err" : "");
   clearTimeout(toast.t); toast.t = setTimeout(() => (t.className = ""), 3000);
 }
-
-/* ================= المظهر ================= */
-const LIGHT = { "--bg": "#f4f6fb", "--panel": "#ffffff", "--panel2": "#eef1f7", "--line": "#dde3ee", "--text": "#16202f", "--muted": "#5d6b82", "--accent": "#0d9488", "--ink": "#ffffff", "--warn": "#b45309", "--ok": "#15803d", "--bad": "#dc2626" };
-function applyTheme(t) {
-  const r = document.documentElement;
-  Object.keys(LIGHT).forEach(k => (t === "light" ? r.style.setProperty(k, LIGHT[k]) : r.style.removeProperty(k)));
-  try { localStorage.setItem("nf_theme", t); } catch {}
-  $("#x-light")?.classList.toggle("primary", t === "light");
-  $("#x-dark")?.classList.toggle("primary", t !== "light");
-}
-let savedTheme = "dark";
-try { savedTheme = localStorage.getItem("nf_theme") || "dark"; } catch {}
-applyTheme(savedTheme);
-
-/* ================= صفحة الإعدادات ================= */
-const nav = document.createElement("button");
-nav.className = "nav"; nav.dataset.view = "settings"; nav.textContent = "الإعدادات";
-$("aside .me").before(nav);
-
-const pane = document.createElement("section");
-pane.dataset.pane = "settings"; pane.className = "hidden";
-pane.innerHTML = `
-  <div class="grid2">
-    <div class="card"><div class="card-h"><h3>المظهر</h3></div><div class="pad">
-      <label>وضع العرض</label>
-      <div class="row-actions"><button class="btn" id="x-light">الوضع النهاري</button><button class="btn" id="x-dark">الوضع الليلي</button></div>
-    </div></div>
-    <div class="card"><div class="card-h"><h3>تغيير كلمة مرور حسابك</h3></div><div class="pad">
-      <label for="x-p0">كلمة المرور الحالية</label><input id="x-p0" type="password" autocomplete="current-password">
-      <label for="x-p1">كلمة المرور الجديدة</label><input id="x-p1" type="password" autocomplete="new-password">
-      <label for="x-p2">تأكيد كلمة المرور الجديدة</label><input id="x-p2" type="password" autocomplete="new-password">
-      <button class="btn primary" id="x-pw" style="margin-top:14px">تغيير كلمة المرور</button>
-    </div></div>
-  </div>`;
-$("main").append(pane);
-
-nav.onclick = () => {
-  document.querySelectorAll("[data-pane]").forEach(p => p.classList.toggle("hidden", p !== pane));
-  document.querySelectorAll(".nav").forEach(n => n.classList.toggle("active", n === nav));
-  $("#title").textContent = "الإعدادات";
-  $("#subtitle").textContent = "المظهر وكلمة المرور";
-};
-$("#x-light").onclick = () => applyTheme("light");
-$("#x-dark").onclick = () => applyTheme("dark");
-applyTheme(savedTheme);
-
-$("#x-pw").onclick = async e => {
-  const u = auth.currentUser, p0 = $("#x-p0").value, p1 = $("#x-p1").value, p2 = $("#x-p2").value;
-  if (!u) return;
-  if (!p0 || p1.length < 6) return toast("أدخل كلمة المرور الحالية والجديدة (6 أحرف على الأقل)", true);
-  if (p1 !== p2) return toast("تأكيد كلمة المرور غير مطابق", true);
-  const btn = e.target; btn.disabled = true;
-  try {
-    await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, p0));
-    await updatePassword(u, p1);
-    ["#x-p0", "#x-p1", "#x-p2"].forEach(s => ($(s).value = ""));
-    toast("تم تغيير كلمة المرور");
-  } catch (err) {
-    toast(["auth/wrong-password", "auth/invalid-credential"].includes(err.code) ? "كلمة المرور الحالية غير صحيحة" : "تعذر تغيير كلمة المرور", true);
-  }
-  btn.disabled = false;
-};
 
 /* ============ عدد المشتركين + زر الحذف بجدول الوكلاء ============ */
 const hex64 = /^[0-9a-f]{64}$/;
