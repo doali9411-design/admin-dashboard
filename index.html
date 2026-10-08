@@ -101,6 +101,21 @@ label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px}
   .stats{grid-template-columns:repeat(2,1fr)}
   .grid2,.f2{grid-template-columns:1fr}
 }
+
+body.light{
+  --bg:#f5f7fb;--panel:#ffffff;--panel2:#eef2f7;--line:#d7dee9;--text:#172033;--muted:#65728a;--ink:#04201c;
+}
+body.light .modal{background:rgba(15,23,42,.35)}
+.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.settings-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.permission-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}
+.permission-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.permission-item input{width:18px;height:18px}
+.top-tools{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.icon-btn{min-width:40px;padding:7px 10px}
+.admin-list{max-height:420px;overflow:auto}
+@media(max-width:900px){.settings-grid,.permission-grid{grid-template-columns:1fr}.top-tools{width:100%}}
+
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -126,13 +141,14 @@ label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px}
     <button class="nav" data-view="broadcast">الإشعارات</button>
     <button class="nav" data-view="audit">سجل العمليات</button>
     <button class="nav" data-view="version">الإصدارات والتحديث <span class="muted" id="nav-ver"></span></button>
+    <button class="nav" data-view="settings">الإعدادات</button>
     <div class="me"><b id="me-email"></b>مدير النظام<br><button class="btn sm" id="btn-out" style="margin-top:10px">تسجيل الخروج</button></div>
   </aside>
 
   <main>
     <header class="top">
       <div><h2 id="title"></h2><p id="subtitle"></p></div>
-      <div class="status"><span id="clock"></span><span class="live" id="live">متصل</span></div>
+      <div class="top-tools"><button class="btn icon-btn" id="theme-toggle" title="الوضع الليلي/النهاري">🌙</button><button class="btn icon-btn" id="lang-toggle" title="العربية / English">EN</button><span class="status"><span id="clock"></span><span class="live" id="live">متصل</span></span></div>
     </header>
 
     <section data-pane="overview">
@@ -209,6 +225,58 @@ label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px}
         <div class="card"><div class="card-h"><h3>الحالة الحالية</h3></div><div class="card-b" id="v-live"></div></div>
       </div>
     </section>
+
+    <section data-pane="settings" class="hidden">
+      <div class="settings-grid">
+        <div class="card">
+          <div class="card-h"><h3 data-t="settings_title">إعدادات النظام</h3></div>
+          <div class="pad">
+            <label data-t="theme_label">المظهر</label>
+            <div class="settings-actions">
+              <button class="btn" id="theme-dark" data-t="dark_mode">الوضع الليلي</button>
+              <button class="btn" id="theme-light" data-t="light_mode">الوضع النهاري</button>
+            </div>
+            <label data-t="language_label">اللغة</label>
+            <div class="settings-actions">
+              <button class="btn" id="lang-ar">العربية</button>
+              <button class="btn" id="lang-en">English</button>
+            </div>
+            <label data-t="password_label">تغيير كلمة مرور حسابك</label>
+            <input id="new-pass" type="password" minlength="6" placeholder="كلمة المرور الجديدة">
+            <input id="new-pass2" type="password" minlength="6" placeholder="تأكيد كلمة المرور الجديدة" style="margin-top:8px">
+            <button class="btn primary" id="change-pass" style="margin-top:12px" data-t="change_password">تغيير كلمة المرور</button>
+          </div>
+        </div>
+
+        <div class="card" id="admin-management-card">
+          <div class="card-h"><h3 data-t="admins_title">مديرو النظام والمستخدمون الإداريون</h3></div>
+          <div class="pad">
+            <p class="muted" data-t="admins_note">يمكن للمدير الرئيسي إنشاء حسابات إدارية وتحديد صلاحيات كل حساب.</p>
+            <label data-t="display_name">الاسم</label><input id="admin-name" placeholder="اسم المستخدم">
+            <label data-t="username_label">اسم المستخدم</label><input id="admin-username" placeholder="مثال: ali_admin" autocomplete="off">
+            <label data-t="email_label">البريد الإلكتروني</label><input id="admin-email" type="email" placeholder="user@example.com" autocomplete="off">
+            <label data-t="password_create">كلمة المرور</label><input id="admin-pass" type="password" minlength="6" placeholder="6 أحرف على الأقل" autocomplete="new-password">
+            <label data-t="permissions_label">الصلاحيات</label>
+            <div class="permission-grid">
+              <label class="permission-item"><input type="checkbox" data-perm="overview" checked><span data-t="perm_overview">نظرة عامة</span></label>
+              <label class="permission-item"><input type="checkbox" data-perm="payments"><span data-t="perm_payments">طلبات التفعيل</span></label>
+              <label class="permission-item"><input type="checkbox" data-perm="agents"><span data-t="perm_agents">الوكلاء</span></label>
+              <label class="permission-item"><input type="checkbox" data-perm="broadcast"><span data-t="perm_broadcast">الإشعارات</span></label>
+              <label class="permission-item"><input type="checkbox" data-perm="audit"><span data-t="perm_audit">سجل العمليات</span></label>
+              <label class="permission-item"><input type="checkbox" data-perm="version"><span data-t="perm_version">الإصدارات</span></label>
+              <label class="permission-item"><input type="checkbox" data-perm="settings"><span data-t="perm_settings">الإعدادات</span></label>
+            </div>
+            <button class="btn primary" id="create-admin" style="margin-top:14px" data-t="create_admin">إنشاء المستخدم الإداري</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px" id="admin-list-card">
+        <div class="card-h"><h3 data-t="admin_list_title">الحسابات الإدارية</h3></div>
+        <div class="card-b wrap admin-list" id="admin-list"></div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -225,9 +293,9 @@ label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px}
 <div id="toast" role="status"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, query, limit, onSnapshot, doc, writeBatch, addDoc, setDoc, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, createUserWithEmailAndPassword, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, query, limit, onSnapshot, doc, getDoc, writeBatch, addDoc, setDoc, getDocs, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -259,7 +327,8 @@ const TITLES = {
   agents:["الوكلاء","الحسابات المسجّلة وحالة اشتراكاتها"],
   broadcast:["التعميمات","رسالة تظهر لكل الوكلاء على هواتفهم"],
   audit:["سجل العمليات","كل إجراء إداري موثّق ولا يمكن حذفه"],
-  version:["الإصدارات والتحديث","تحكم في آخر إصدار وفرض التحديث"]
+  version:["الإصدارات والتحديث","تحكم في آخر إصدار وفرض التحديث"],
+  settings:["الإعدادات","المظهر واللغة وكلمات المرور والحسابات الإدارية"]
 };
 
 function toast(m, err=false){ const t=$("#toast"); t.textContent=m; t.className="show"+(err?" err":""); clearTimeout(toast.t); toast.t=setTimeout(()=>t.className="",2800); }
@@ -270,6 +339,7 @@ function show(v){
   $$("[data-pane]").forEach(p=>p.classList.toggle("hidden",p.dataset.pane!==v));
   $$(".nav").forEach(n=>n.classList.toggle("active",n.dataset.view===v));
   $("#title").textContent=TITLES[v][0]; $("#subtitle").textContent=TITLES[v][1]; location.hash=v;
+  if(v==="settings" && typeof loadAdminProfiles==="function") loadAdminProfiles();
 }
 $$(".nav").forEach(n=>n.onclick=()=>show(n.dataset.view));
 $$("[data-go]").forEach(b=>b.onclick=()=>show(b.dataset.go));
@@ -286,12 +356,13 @@ $("#login-form").onsubmit = async e => {
 $("#btn-out").onclick=()=>signOut(auth);
 
 async function isAdmin(u){
-  try {
-    const t = await u.getIdTokenResult(true);
-    return t.claims.admin === true || (u.email && u.email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
-  } catch(e) {
-    return (u.email && u.email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
-  }
+  if(u.email && u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase()) return true;
+  try{
+    const t=await u.getIdTokenResult(true);
+    if(t.claims.admin===true) return true;
+    const p=await getDoc(doc(db,"admin_users",u.uid));
+    return p.exists() && p.data().active!==false;
+  }catch(e){ return false; }
 }
 
 onAuthStateChanged(auth, async user=>{
@@ -305,9 +376,26 @@ onAuthStateChanged(auth, async user=>{
   }
   S.me=user; $("#me-email").textContent=user.email;
   $("#login").classList.add("hidden"); $("#app").classList.remove("hidden");
+  await applyPermissions(user);
   show(TITLES[location.hash.slice(1)]?location.hash.slice(1):"overview"); 
   listen();
 });
+
+
+async function applyPermissions(user){
+  const perms={overview:true,payments:true,agents:true,broadcast:true,audit:true,version:true,settings:true};
+  if(user.email?.toLowerCase()!==ADMIN_EMAIL.toLowerCase()){
+    const p=await getDoc(doc(db,"admin_users",user.uid));
+    Object.assign(perms,p.exists()?p.data().permissions||{}:{});
+  }
+  $$(".nav[data-view]").forEach(n=>n.classList.toggle("hidden",perms[n.dataset.view]!==true));
+  // Hide settings administration card for non-master users.
+  if(user.email?.toLowerCase()!==ADMIN_EMAIL.toLowerCase()) $("#admin-management-card")?.classList.add("hidden");
+  if(!perms[location.hash.slice(1)]){
+    const first=Object.keys(perms).find(k=>perms[k]===true)||"overview";
+    show(first);
+  }
+}
 
 /* استماع البيانات الحية */
 function listen(){
@@ -417,6 +505,10 @@ function renderVersion(fill){
 /* الإجراءات */
 const logTo=(b,action,details,target)=>{ const d={action,details,target:target||null,by:S.me.email,byUid:S.me.uid,at:serverTimestamp()};
   if(b) b.set(doc(collection(db,C.AUDIT)),d); else return addDoc(collection(db,C.AUDIT),d); };
+const can=async(section)=>{
+  if(S.me?.email?.toLowerCase()===ADMIN_EMAIL.toLowerCase()) return true;
+  try{ const p=await getDoc(doc(db,"admin_users",S.me.uid)); return p.exists() && p.data().active!==false && p.data().permissions?.[section]===true; }catch(e){ return false; }
+};
 const busy=async(btn,fn)=>{ btn&&(btn.disabled=true); try{ await fn(); }catch(e){ console.error(e); toast("تعذّر تنفيذ العملية. تحقق من الصلاحيات.",true); } btn&&(btn.disabled=false); };
 const addDays=n=>Timestamp.fromDate(new Date(Date.now()+n*864e5));
 const planKey = p => String(p.planType || p.plan_type || p.plan || "MONTHLY").toUpperCase();
@@ -481,8 +573,8 @@ function closeReject(){ $("#reject-modal").classList.add("hidden"); S.rejectId=n
 document.addEventListener("click",e=>{
   const btn=e.target.closest("[data-act]"); if(!btn) return; const {act,id}=btn.dataset;
   const p=S.pay.find(x=>x.id===id), u=S.users.find(x=>x.id===id);
-  if(act==="approve"&&p) busy(btn,()=>approve(p));
-  else if(act==="reject"&&p){ 
+  if(act==="approve"&&p) busy(btn,async()=>{if(await can("payments")) await approve(p); else toast("لا توجد صلاحية.",true);});
+  else if(act==="reject"&&p){ if(S.me?.email?.toLowerCase()!==ADMIN_EMAIL.toLowerCase()) { can("payments").then(ok=>{if(!ok) toast("لا توجد صلاحية.",true);}); return; } 
     S.rejectId=id; 
     const email = p.agentEmail || p.email || "";
     const txId = p.transactionId || p.transaction_id || "";
@@ -492,19 +584,19 @@ document.addEventListener("click",e=>{
     $("#reject-reason").focus(); 
   }
   else if(act==="receipt"&&p){ const url=p.receiptUrl||p.receiptImage; if(/^https:\/\//.test(url)){ $("#receipt-img").src=url; $("#receipt-modal").classList.remove("hidden"); } else toast("رابط الوصل غير صالح",true); }
-    else if(act==="extend"&&u) busy(btn,async()=>{
+    else if(act==="extend"&&u) busy(btn,async()=>{ if(!(await can("agents"))){toast("لا توجد صلاحية.",true);return;}
     if(!confirm(`تمديد اشتراك ${u.email} ${SUBSCRIPTION_DAYS} يوماً؟`)) return;
     const cur=u.subscriptionEndsAt?.toDate?.(); const base=cur&&cur>new Date()?cur:new Date();
     const ends=Timestamp.fromDate(new Date(base.getTime()+SUBSCRIPTION_DAYS*864e5));
     const b=writeBatch(db);
     docsOf(u).forEach(d=>b.set(doc(db,C.USERS,d.id),{subscriptionStatus:"ACTIVE",status:"ACTIVE",is_subscribed:true,is_suspended:false,subscriptionEndsAt:ends,subscription_expiry_timestamp:ends,subscriptionExpiryAt:ends.toMillis()},{merge:true}));
     logTo(b,"PLAN_EXTENDED",`تمديد اشتراك ${u.email} ${SUBSCRIPTION_DAYS} يوماً`,u.email); await b.commit(); toast("تم التمديد"); });
-  else if(act==="suspend"&&u) busy(btn,async()=>{
+  else if(act==="suspend"&&u) busy(btn,async()=>{ if(!(await can("agents"))){toast("لا توجد صلاحية.",true);return;}
     if(!confirm(`تجميد حساب ${u.email}؟`)) return;
     const b=writeBatch(db);
     docsOf(u).forEach(d=>b.set(doc(db,C.USERS,d.id),{subscriptionStatus:"SUSPENDED",status:"SUSPENDED",is_suspended:true,suspended_reason:"إجراء إداري",suspended_by:S.me.email,suspended_updated_at:serverTimestamp()},{merge:true}));
     logTo(b,"ACCOUNT_SUSPENDED",`تجميد حساب ${u.email}`,u.email); await b.commit(); toast("تم التجميد"); });
-  else if(act==="unsuspend"&&u) busy(btn,async()=>{
+  else if(act==="unsuspend"&&u) busy(btn,async()=>{ if(!(await can("agents"))){toast("لا توجد صلاحية.",true);return;}
     if(!confirm(`رفع التجميد عن ${u.email}؟`)) return;
     const live=(u.subscriptionEndsAt?.toDate?.()||new Date(0))>new Date(); const st=live?"ACTIVE":"EXPIRED";
     const b=writeBatch(db);
@@ -515,6 +607,171 @@ document.addEventListener("click",e=>{
 $("#reject-ok").onclick=e=>busy(e.target,reject);
 $("#reject-cancel").onclick=closeReject;
 $("#receipt-close").onclick=()=>{ $("#receipt-modal").classList.add("hidden"); $("#receipt-img").removeAttribute("src"); };
+
+
+/* =========================
+   المظهر + اللغة + الإعدادات
+   ========================= */
+
+const STATIC_I18N = {
+"إدارة المنظومة":"NetFlow Administration","دخول الإدارة المركزية فقط":"Central administration login",
+"البريد الإلكتروني":"Email","كلمة المرور":"Password","تسجيل الدخول":"Sign in","نظرة عامة":"Overview",
+"طلبات التفعيل":"Activation requests","الوكلاء":"Agents","الإشعارات":"Broadcasts","سجل العمليات":"Audit log",
+"الإصدارات والتحديث":"Versions & updates","الإعدادات":"Settings","مدير النظام":"System administrator",
+"تسجيل الخروج":"Sign out","متصل":"Connected","طلبات بانتظار القرار":"Pending decisions","إجمالي الوكلاء":"Total agents",
+"اشتراكات فعّالة":"Active subscriptions","تعميمات مرسلة":"Broadcasts sent","طلبات تحتاج قراراً":"Requests needing review",
+"عرض الكل":"View all","آخر العمليات":"Recent operations","السجل الكامل":"Full log","بانتظار القرار":"Pending",
+"مقبولة":"Approved","مرفوضة":"Rejected","الكل":"All","بحث برقم الحوالة أو البريد":"Search by transaction or email",
+"بحث بالبريد الإلكتروني":"Search by email","التعميمات المرسلة":"Sent broadcasts","تعميم جديد":"New broadcast",
+"العنوان":"Title","الأولوية":"Priority","عادي":"Normal","عالي الأهمية / طوارئ":"High / emergency",
+"نص التعميم":"Broadcast message","إرسال لكل الهواتف":"Send to all phones","كل الإجراءات":"All actions",
+"تفعيل اشتراك":"Activate subscription","رفض طلب دفع":"Reject payment","تمديد اشتراك":"Extend subscription",
+"تجميد حساب":"Suspend account","رفع التجميد":"Unsuspend account","إرسال تعميم":"Send broadcast","تحديث الإصدار":"Update version",
+"إعدادات الإصدار":"Version settings","اسم الإصدار الأحدث":"Latest version name","كود الإصدار الأحدث":"Latest version code",
+"الحد الأدنى المسموح (كود)":"Minimum allowed code","رابط التحميل (APK أو المتجر)":"Download link (APK or store)",
+"ما الجديد في هذا الإصدار":"Release notes","فرض التحديث":"Force update","حفظ وتطبيق":"Save & apply",
+"الحالة الحالية":"Current status","الإصدار المعلن":"Published version","كود الإصدار":"Version code","الحد الأدنى":"Minimum code",
+"مفعّل":"Enabled","غير مفعّل":"Disabled","رفض الطلب":"Reject request","تأكيد الرفض":"Confirm rejection","إلغاء":"Cancel",
+"سبب الرفض (يظهر للوكيل)":"Rejection reason (shown to agent)","وصل الحوالة":"Payment receipt","إغلاق":"Close"
+};
+const translateStaticText=()=>{
+  const reverse=Object.fromEntries(Object.entries(STATIC_I18N).map(([a,e])=>[e,a]));
+  const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+  const nodes=[]; while(walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(n=>{
+    if(!n.parentElement || n.parentElement.closest("script,style")) return;
+    const v=n.nodeValue.trim(); if(!v) return;
+    const original=n.dataset?.i18nOriginal || (STATIC_I18N[v] ? v : reverse[v]);
+    if(!original) return;
+    n.dataset.i18nOriginal=original;
+    const translated=lang==="ar"?original:(STATIC_I18N[original]||original);
+    n.nodeValue=n.nodeValue.replace(v,translated);
+  });
+};
+const UI_LANG = {
+  ar:{
+    settings_title:"إعدادات النظام",theme_label:"المظهر",dark_mode:"الوضع الليلي",light_mode:"الوضع النهاري",
+    language_label:"اللغة",password_label:"تغيير كلمة مرور حسابك",change_password:"تغيير كلمة المرور",
+    admins_title:"مديرو النظام والمستخدمون الإداريون",admins_note:"يمكن للمدير الرئيسي إنشاء حسابات إدارية وتحديد صلاحيات كل حساب.",
+    display_name:"الاسم",username_label:"اسم المستخدم",email_label:"البريد الإلكتروني",password_create:"كلمة المرور",
+    permissions_label:"الصلاحيات",perm_overview:"نظرة عامة",perm_payments:"طلبات التفعيل",perm_agents:"الوكلاء",
+    perm_broadcast:"الإشعارات",perm_audit:"سجل العمليات",perm_version:"الإصدارات",perm_settings:"الإعدادات",
+    create_admin:"إنشاء المستخدم الإداري",admin_list_title:"الحسابات الإدارية",active:"فعّال",disabled:"موقوف",
+    no_admins:"لا توجد حسابات إدارية إضافية.",create_ok:"تم إنشاء المستخدم الإداري بنجاح.",
+    pass_ok:"تم تغيير كلمة المرور بنجاح.",pass_match:"كلمتا المرور غير متطابقتين.",
+    pass_short:"كلمة المرور يجب أن تكون 6 أحرف على الأقل.",recent_login:"لأسباب أمنية يجب تسجيل الدخول من جديد ثم إعادة المحاولة.",
+    required:"أكمل جميع حقول المستخدم الإداري.",email_exists:"هذا البريد مستخدم مسبقاً.",admin_only:"هذه العملية متاحة للمدير الرئيسي فقط.",
+    username_exists:"اسم المستخدم مستخدم مسبقاً.",permissions_required:"اختر صلاحية واحدة على الأقل.",
+    enabled:"تفعيل",disabled_action:"إيقاف",permissions:"الصلاحيات"
+  },
+  en:{
+    settings_title:"System Settings",theme_label:"Appearance",dark_mode:"Dark mode",light_mode:"Light mode",
+    language_label:"Language",password_label:"Change your password",change_password:"Change password",
+    admins_title:"System Administrators",admins_note:"The master administrator can create admin accounts and assign permissions.",
+    display_name:"Name",username_label:"Username",email_label:"Email",password_create:"Password",
+    permissions_label:"Permissions",perm_overview:"Overview",perm_payments:"Activation requests",perm_agents:"Agents",
+    perm_broadcast:"Broadcasts",perm_audit:"Audit log",perm_version:"Versions",perm_settings:"Settings",
+    create_admin:"Create admin user",admin_list_title:"Admin accounts",active:"Active",disabled:"Disabled",
+    no_admins:"No additional admin accounts.",create_ok:"Admin user created successfully.",
+    pass_ok:"Password changed successfully.",pass_match:"Passwords do not match.",
+    pass_short:"Password must be at least 6 characters.",recent_login:"For security, sign in again and retry.",
+    required:"Complete all admin user fields.",email_exists:"This email is already in use.",admin_only:"Only the master administrator can do this.",
+    username_exists:"This username is already in use.",permissions_required:"Select at least one permission.",
+    enabled:"Enable",disabled_action:"Disable",permissions:"Permissions"
+  }
+};
+let lang=localStorage.getItem("netflow_lang")||"ar";
+let theme=localStorage.getItem("netflow_theme")||"dark";
+
+const applyTheme=()=>{
+  document.body.classList.toggle("light",theme==="light");
+  $("#theme-toggle").textContent=theme==="light"?"☀️":"🌙";
+  $("#theme-dark")?.classList.toggle("primary",theme==="dark");
+  $("#theme-light")?.classList.toggle("primary",theme==="light");
+};
+const applyLanguage=()=>{
+  const d=UI_LANG[lang];
+  document.documentElement.lang=lang;
+  document.documentElement.dir=lang==="ar"?"rtl":"ltr";
+  $$("[data-t]").forEach(el=>{ const k=el.dataset.t; if(d[k]) el.textContent=d[k]; });
+  $("#lang-toggle").textContent=lang==="ar"?"EN":"عربي";
+  applyTheme();
+  translateStaticText();
+};
+const setTheme=v=>{theme=v;localStorage.setItem("netflow_theme",v);applyTheme();};
+const setLang=v=>{lang=v;localStorage.setItem("netflow_lang",v);applyLanguage();};
+
+$("#theme-toggle").onclick=()=>setTheme(theme==="dark"?"light":"dark");
+$("#theme-dark").onclick=()=>setTheme("dark");
+$("#theme-light").onclick=()=>setTheme("light");
+$("#lang-toggle").onclick=()=>setLang(lang==="ar"?"en":"ar");
+$("#lang-ar").onclick=()=>setLang("ar");
+$("#lang-en").onclick=()=>setLang("en");
+applyLanguage();
+
+async function loadAdminProfiles(){
+  const box=$("#admin-list"); if(!box) return;
+  try{
+    const snap=await getDocs(query(collection(db,"admin_users"),limit(100)));
+    if(snap.empty){box.innerHTML=`<div class="empty">${UI_LANG[lang].no_admins}</div>`;return;}
+    box.innerHTML=`<table><thead><tr><th>${UI_LANG[lang].display_name}</th><th>${UI_LANG[lang].username_label}</th><th>${UI_LANG[lang].email_label}</th><th>${UI_LANG[lang].permissions}</th><th>${UI_LANG[lang].active}</th></tr></thead><tbody>`+
+      snap.docs.map(d=>{
+        const x=d.data(), perms=Object.entries(x.permissions||{}).filter(([,v])=>v).map(([k])=>k).join(", ");
+        return `<tr><td>${esc(x.displayName||"—")}</td><td class="mono">${esc(x.username||"—")}</td><td>${esc(x.email||"—")}</td><td class="muted">${esc(perms||"—")}</td><td>${x.active===false?UI_LANG[lang].disabled:UI_LANG[lang].active}</td></tr>`;
+      }).join("")+"</tbody></table>";
+  }catch(e){console.error(e);box.innerHTML=`<div class="empty">${e.code==="permission-denied"?"لا توجد صلاحية لقراءة حسابات الإدارة.":"تعذر تحميل الحسابات."}</div>`;}
+}
+
+async function createAdminUser(){
+  if(S.me?.email?.toLowerCase()!==ADMIN_EMAIL.toLowerCase()){toast(UI_LANG[lang].admin_only,true);return;}
+  const name=$("#admin-name").value.trim(), username=$("#admin-username").value.trim().toLowerCase(),
+        email=$("#admin-email").value.trim().toLowerCase(), pass=$("#admin-pass").value;
+  const permissions={}; $$("[data-perm]").forEach(x=>permissions[x.dataset.perm]=x.checked);
+  if(!name||!username||!email||!pass){toast(UI_LANG[lang].required,true);return;}
+  if(pass.length<6){toast(UI_LANG[lang].pass_short,true);return;}
+  if(!Object.values(permissions).some(Boolean)){toast(UI_LANG[lang].permissions_required,true);return;}
+  const existing=await getDocs(query(collection(db,"admin_users"),limit(100)));
+  if(existing.docs.some(d=>(d.data().username||"").toLowerCase()===username)){toast(UI_LANG[lang].username_exists,true);return;}
+
+  const btn=$("#create-admin"); btn.disabled=true;
+  try{
+    // Secondary Firebase Auth instance keeps the current master session signed in.
+    const secondaryName="adminCreator";
+    let secondary;
+    try{ secondary=initializeApp(firebaseConfig,secondaryName); }catch(e){ secondary=getApp(secondaryName); }
+    const secondaryAuth=getAuth(secondary);
+    const cred=await createUserWithEmailAndPassword(secondaryAuth,email,pass);
+    await setDoc(doc(db,"admin_users",cred.user.uid),{
+      uid:cred.user.uid,email,username,displayName:name,active:true,role:"ADMIN",permissions,createdAt:serverTimestamp(),createdBy:S.me.email
+    });
+    await signOut(secondaryAuth);
+    toast(UI_LANG[lang].create_ok);
+    $("#admin-name").value=$("#admin-username").value=$("#admin-email").value=$("#admin-pass").value="";
+    loadAdminProfiles();
+  }catch(e){
+    console.error(e);
+    toast(e.code==="auth/email-already-in-use"?UI_LANG[lang].email_exists:(e.message||"تعذر إنشاء المستخدم"),true);
+  }finally{btn.disabled=false;}
+}
+
+$("#create-admin").onclick=()=>busy($("#create-admin"),createAdminUser);
+
+$("#change-pass").onclick=async e=>{
+  const p1=$("#new-pass").value,p2=$("#new-pass2").value;
+  if(p1.length<6){toast(UI_LANG[lang].pass_short,true);return;}
+  if(p1!==p2){toast(UI_LANG[lang].pass_match,true);return;}
+  await busy(e.target,async()=>{
+    try{
+      await updatePassword(auth.currentUser,p1);
+      $("#new-pass").value=$("#new-pass2").value="";
+      toast(UI_LANG[lang].pass_ok);
+    }catch(err){
+      console.error(err);
+      if(err.code==="auth/requires-recent-login"){toast(UI_LANG[lang].recent_login,true);}
+      else throw err;
+    }
+  });
+};
 
 $("#bc-send").onclick=e=>busy(e.target,async()=>{
   const title=$("#bc-title").value.trim(), body=$("#bc-body").value.trim();
