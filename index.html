@@ -1,36 +1,37 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>إدارة المنظومة | NetFlow</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NetFlow Control Hub | إدارة المنظومة والصلاحيات</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0b1220;--panel:#121b2e;--panel2:#17223a;--line:#22304a;--text:#e8eef9;--muted:#8a9ab5;--accent:#2dd4bf;--ink:#04201c;--warn:#fbbf24;--ok:#4ade80;--bad:#f87171}
-*{box-sizing:border-box;margin:0}
-html,body{height:100%}
-body{font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.6}
-button,input,textarea,select{font:inherit;color:inherit}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+:root{
+  --bg:#0b0f19;--panel:#111827;--panel2:#1f2937;--line:#374151;
+  --text:#f9fafb;--muted:#9ca3af;--accent:#06b6d4;--accent2:#3b82f6;--ink:#0b0f19;
+  --ok:#10b981;--warn:#f59e0b;--bad:#ef4444;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Cairo',system-ui,sans-serif;min-height:100vh}
 .hidden{display:none!important}
-#login{min-height:100%;display:grid;place-items:center;padding:24px}
-.login-box{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:32px}
+#login{min-height:100vh;display:grid;place-items:center;padding:20px}
+.login-box{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:36px;width:100%;max-width:400px;box-shadow:0 20px 40px rgba(0,0,0,.5)}
 .login-box h1{font-size:22px;text-align:center}
 .login-box p{color:var(--muted);text-align:center;margin-bottom:12px}
 #login-err{color:var(--bad);margin-top:12px;min-height:22px;font-size:14px;text-align:center}
-#app{display:grid;grid-template-columns:240px 1fr;min-height:100%}
-aside{background:var(--panel);border-inline-end:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
+#app{display:grid;grid-template-columns:250px 1fr;min-height:100%}
+aside{background:var(--panel);border-inline-end:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh;overflow-y:auto}
 .brand{font-weight:700;font-size:17px;padding:4px 10px 16px}
 .brand small{display:block;color:var(--muted);font-weight:400;font-size:12px}
-.nav{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:8px;background:none;border:0;cursor:pointer;color:var(--muted);text-align:start;width:100%}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:8px;background:none;border:0;cursor:pointer;color:var(--muted);text-align:start;width:100%;font-family:inherit;font-size:14px}
 .nav:hover,.nav.active{background:var(--panel2);color:var(--text)}
 .nav.active{box-shadow:inset -3px 0 0 var(--accent)}
 .badge-n{background:var(--warn);color:#2a1d00;border-radius:99px;font-size:12px;font-weight:700;padding:0 8px;min-width:22px;text-align:center}
 .badge-n.zero{background:var(--line);color:var(--muted)}
 .me{margin-top:auto;border-top:1px solid var(--line);padding:14px 10px 0;font-size:13px;color:var(--muted);word-break:break-all}
-.me b{display:block;color:var(--text);font-weight:500}
+.me b{display:block;color:var(--text);font-weight:600}
 main{padding:28px 32px;max-width:1240px;width:100%}
 header.top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:22px;flex-wrap:wrap}
 header.top h2{font-size:24px;line-height:1.3}
@@ -39,94 +40,81 @@ header.top p{color:var(--muted);font-size:14px}
 .live{color:var(--ok);display:flex;align-items:center;gap:6px}
 .live::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok)}
 .live.off{color:var(--bad)}.live.off::before{background:var(--bad)}
-.btn{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer;color:var(--text);font-family:inherit;font-size:13.5px}
 .btn:hover{border-color:var(--muted)}
-.btn.primary{background:var(--accent);color:var(--ink);border-color:var(--accent);font-weight:600}
-.btn.ok{background:rgba(74,222,128,.14);border-color:rgba(74,222,128,.4);color:var(--ok)}
-.btn.bad{background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.4);color:var(--bad)}
-.btn.sm{padding:3px 10px;font-size:13px}
+.btn.primary{background:var(--accent);color:var(--ink);border-color:var(--accent);font-weight:700}
+.btn.ok{background:rgba(16,185,129,.14);border-color:rgba(16,185,129,.4);color:var(--ok);font-weight:600}
+.btn.bad{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.4);color:var(--bad);font-weight:600}
+.btn.sm{padding:4px 10px;font-size:12.5px}
 .btn:disabled{opacity:.5;cursor:not-allowed}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:14px}
 .card-h{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line);gap:10px}
 .card-h h3{font-size:16px}
 .card-b{padding:6px 20px 14px}
-.pad{padding:6px 20px 20px}
+.pad{padding:14px 20px 20px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
 .stat{padding:14px 18px}
 .stat span{color:var(--muted);font-size:13px}
-.stat b{display:block;font-size:26px;font-weight:600;line-height:1.3}
+.stat b{display:block;font-size:24px;font-weight:700;line-height:1.3}
 .stat.warn b{color:var(--warn)}
 .grid2{display:grid;grid-template-columns:3fr 2fr;gap:16px;align-items:start}
 .empty{color:var(--muted);text-align:center;padding:28px 8px}
 table{width:100%;border-collapse:collapse}
-th{color:var(--muted);font-weight:500;font-size:13px;text-align:start;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--muted);font-weight:600;font-size:13px;text-align:start;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
 td{padding:11px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
 tr:last-child td{border-bottom:0}
 .wrap{overflow-x:auto}
-.tag{display:inline-block;border-radius:6px;padding:1px 9px;font-size:13px;font-weight:500;white-space:nowrap}
-.t-PENDING{background:rgba(251,191,36,.15);color:var(--warn)}
-.t-APPROVED,.t-ACTIVE{background:rgba(74,222,128,.14);color:var(--ok)}
-.t-REJECTED,.t-EXPIRED,.t-SUSPENDED,.t-HIGH{background:rgba(248,113,113,.13);color:var(--bad)}
-.t-ADMIN{background:rgba(45,212,191,.15);color:var(--accent)}
+.tag{display:inline-block;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600;white-space:nowrap}
+.t-PENDING{background:rgba(245,158,11,.15);color:var(--warn)}
+.t-APPROVED,.t-ACTIVE{background:rgba(16,185,129,.14);color:var(--ok)}
+.t-REJECTED,.t-EXPIRED,.t-SUSPENDED,.t-HIGH{background:rgba(239,68,68,.13);color:var(--bad)}
+.t-ADMIN{background:rgba(6,182,212,.15);color:var(--accent)}
 .t-AGENT,.t-NORMAL{background:var(--panel2);color:var(--muted)}
-.mono{font-family:ui-monospace,Menlo,Consolas,monospace;direction:ltr;unicode-bidi:embed;font-size:13px}
+.mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;direction:ltr;unicode-bidi:embed;font-size:13px}
 .muted{color:var(--muted);font-size:13px}
-.row-actions{display:flex;gap:6px;flex-wrap:wrap}
-.bar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.row-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.bar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
 .tabs{display:flex;gap:6px;flex-wrap:wrap}
-.tabs .btn.on{background:var(--accent);color:var(--ink);border-color:var(--accent)}
-input,textarea,select{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 12px;width:100%}
+.tabs .btn.on{background:var(--accent);color:var(--ink);border-color:var(--accent);font-weight:700}
+input,textarea,select{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 12px;width:100%;color:var(--text);font-family:inherit}
 .bar input,.bar select{max-width:320px}
-label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px}
+label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px;font-weight:500}
 .f2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .log{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .log:last-child{border:0}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:9px;flex:none}
 .sw{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:14px}
 .sw input{width:20px;height:20px;accent-color:var(--bad)}
-.kv{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line)}
-.kv:last-child{border:0}
-.modal{position:fixed;inset:0;background:rgba(3,7,15,.75);display:grid;place-items:center;padding:20px;z-index:20}
-.modal .box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;width:100%;max-width:420px;max-height:90vh;overflow:auto}
-.modal img{max-width:100%;max-height:75vh;border-radius:8px;display:block;margin:12px auto 0}
-#toast{position:fixed;bottom:24px;left:24px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 18px;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none;z-index:30}
-#toast.show{opacity:1;transform:none}
+.modal{position:fixed;inset:0;background:rgba(3,7,15,.75);display:grid;place-items:center;padding:20px;z-index:30}
+.modal .box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto}
+.perm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.perm-item{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12.5px;cursor:pointer}
+.perm-item:hover{border-color:var(--accent)}
+.perm-item input{width:16px;height:16px;accent-color:var(--accent);margin:0}
+.perm-badge{display:inline-block;padding:2px 7px;border-radius:5px;font-size:11px;background:var(--panel2);border:1px solid var(--line);margin:2px 2px;color:var(--muted)}
+.perm-badge.has{background:rgba(6,182,212,.12);border-color:rgba(6,182,212,.3);color:var(--accent);font-weight:600}
+.presets{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}
+#toast{position:fixed;bottom:24px;left:24px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 18px;font-size:13.5px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:40}
+#toast.show{opacity:1}
 #toast.err{border-color:var(--bad);color:var(--bad)}
-@media(max-width:900px){
+@media(max-width:860px){
   #app{grid-template-columns:1fr}
-  aside{position:static;height:auto;flex-direction:row;flex-wrap:wrap;padding:10px}
-  .brand,.me{display:none}
-  .nav{width:auto;padding:8px 12px}
-  main{padding:18px 14px}
-  .stats{grid-template-columns:repeat(2,1fr)}
-  .grid2,.f2{grid-template-columns:1fr}
+  aside{height:auto;position:static}
+  .grid2,.stats{grid-template-columns:1fr}
+  .f2,.perm-grid{grid-template-columns:1fr}
 }
-
-body.light{
-  --bg:#f5f7fb;--panel:#ffffff;--panel2:#eef2f7;--line:#d7dee9;--text:#172033;--muted:#65728a;--ink:#04201c;
-}
-body.light .modal{background:rgba(15,23,42,.35)}
-.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-.settings-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.permission-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}
-.permission-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
-.permission-item input{width:18px;height:18px}
-.top-tools{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
-.icon-btn{min-width:40px;padding:7px 10px}
-.admin-list{max-height:420px;overflow:auto}
-@media(max-width:900px){.settings-grid,.permission-grid{grid-template-columns:1fr}.top-tools{width:100%}}
-
-@media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 
 <section id="login">
   <form class="login-box" id="login-form">
-    <h1>إدارة المنظومة</h1>
-    <p>دخول الإدارة المركزية فقط</p>
-    <label for="l-email">البريد الإلكتروني</label><input id="l-email" type="email" required autocomplete="username" value="mantime50@gmail.com">
-    <label for="l-pass">كلمة المرور</label><input id="l-pass" type="password" required autocomplete="current-password">
+    <div class="brand" style="text-align:center;padding-bottom:12px">NetFlow Control Hub<small>لوحة الإدارة المركزية</small></div>
+    <p>تسجيل دخول المشرفين والمدراء</p>
+    <label for="l-email">البريد الإلكتروني</label>
+    <input id="l-email" type="email" autocomplete="username" required placeholder="admin@example.com">
+    <label for="l-pass">كلمة المرور</label>
+    <input id="l-pass" type="password" autocomplete="current-password" required placeholder="••••••••">
     <button class="btn primary" id="l-btn" style="width:100%;padding:11px;margin-top:18px">تسجيل الدخول</button>
     <div id="login-err"></div>
   </form>
@@ -136,34 +124,46 @@ body.light .modal{background:rgba(15,23,42,.35)}
   <aside>
     <div class="brand">إدارة المنظومة<small>NetFlow Control Hub</small></div>
     <button class="nav active" data-view="overview">نظرة عامة</button>
-    <button class="nav" data-view="payments">طلبات التفعيل <span class="badge-n zero" id="nav-pending">0</span></button>
-    <button class="nav" data-view="agents">الوكلاء <span class="badge-n zero" id="nav-agents">0</span></button>
-    <button class="nav" data-view="broadcast">الإشعارات</button>
-    <button class="nav" data-view="audit">سجل العمليات</button>
-    <button class="nav" data-view="version">الإصدارات والتحديث <span class="muted" id="nav-ver"></span></button>
-    <button class="nav" data-view="settings">الإعدادات</button>
-    <div class="me"><b id="me-email"></b>مدير النظام<br><button class="btn sm" id="btn-out" style="margin-top:10px">تسجيل الخروج</button></div>
+    <button class="nav" data-view="payments" id="nav-btn-payments">طلبات التفعيل <span class="badge-n zero" id="nav-pending">0</span></button>
+    <button class="nav" data-view="agents" id="nav-btn-agents">الوكلاء <span class="badge-n zero" id="nav-agents">0</span></button>
+    <button class="nav" data-view="admins" id="nav-btn-admins">المشرفون والصلاحيات <span class="badge-n zero" id="nav-admins">0</span></button>
+    <button class="nav" data-view="broadcast" id="nav-btn-broadcast">الإشعارات</button>
+    <button class="nav" data-view="audit" id="nav-btn-audit">سجل العمليات</button>
+    <button class="nav" data-view="version" id="nav-btn-version">الإصدارات والتحديث <span class="muted" id="nav-ver"></span></button>
+    <div class="me">
+      <b id="me-email"></b>
+      <span id="me-role">مدير النظام</span>
+      <button class="btn sm" id="btn-out" style="margin-top:10px;width:100%">تسجيل الخروج</button>
+    </div>
   </aside>
 
   <main>
     <header class="top">
-      <div><h2 id="title"></h2><p id="subtitle"></p></div>
-      <div class="top-tools"><button class="btn icon-btn" id="theme-toggle" title="الوضع الليلي/النهاري">🌙</button><button class="btn icon-btn" id="lang-toggle" title="العربية / English">EN</button><span class="status"><span id="clock"></span><span class="live" id="live">متصل</span></span></div>
+      <div><h2 id="title">نظرة عامة</h2><p id="subtitle">لوحة التحكم والمراقبة</p></div>
+      <div class="status"><span id="clock"></span><span class="live" id="live">متصل</span></div>
     </header>
 
+    <!-- 1. OVERVIEW -->
     <section data-pane="overview">
-      <div class="stats">
+      <div class="stats" id="overview-stats">
         <div class="card stat warn"><span>طلبات بانتظار القرار</span><b id="s-pending">0</b></div>
         <div class="card stat"><span>إجمالي الوكلاء</span><b id="s-agents">0</b></div>
         <div class="card stat"><span>اشتراكات فعّالة</span><b id="s-active">0</b></div>
-        <div class="card stat"><span>تعميمات مرسلة</span><b id="s-bc">0</b></div>
+        <div class="card stat"><span>الإيرادات التقديرية</span><b id="s-revenue">0 د.ع</b></div>
       </div>
       <div class="grid2">
-        <div class="card"><div class="card-h"><h3>طلبات تحتاج قراراً</h3><button class="btn sm" data-go="payments">عرض الكل</button></div><div class="card-b wrap" id="ov-pending"></div></div>
-        <div class="card"><div class="card-h"><h3>آخر العمليات</h3><button class="btn sm" data-go="audit">السجل الكامل</button></div><div class="card-b" id="ov-audit"></div></div>
+        <div class="card">
+          <div class="card-h"><h3>طلبات تحتاج قراراً</h3><button class="btn sm" data-go="payments">عرض الكل</button></div>
+          <div class="card-b wrap" id="ov-pending"></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h3>آخر العمليات الإدارية</h3><button class="btn sm" data-go="audit">السجل الكامل</button></div>
+          <div class="card-b" id="ov-audit"></div>
+        </div>
       </div>
     </section>
 
+    <!-- 2. PAYMENTS -->
     <section data-pane="payments" class="hidden">
       <div class="bar">
         <div class="tabs" id="pay-tabs">
@@ -177,16 +177,35 @@ body.light .modal{background:rgba(15,23,42,.35)}
       <div class="card"><div class="card-b wrap" id="pay-list"></div></div>
     </section>
 
+    <!-- 3. AGENTS -->
     <section data-pane="agents" class="hidden">
-      <div class="bar"><input id="agent-q" placeholder="بحث بالبريد الإلكتروني"></div>
+      <div class="bar">
+        <input id="agent-q" placeholder="بحث بالبريد الإلكتروني أو الاسم">
+      </div>
       <div class="card"><div class="card-b wrap" id="agent-list"></div></div>
     </section>
 
+    <!-- 4. ADMINS & PERMISSIONS (المشرفون والصلاحيات) -->
+    <section data-pane="admins" class="hidden">
+      <div class="bar" style="justify-content:space-between">
+        <input id="admin-q" placeholder="بحث باسم المشرف أو بريده...">
+        <button class="btn primary" id="btn-add-admin">+ إضافة مشرف إداري جديد</button>
+      </div>
+      <div class="card">
+        <div class="card-h">
+          <h3>قائمة المشرفين الإداريين وصلاحياتهم</h3>
+          <span class="muted" id="admins-count-label">0 مشرف</span>
+        </div>
+        <div class="card-b wrap" id="admin-list"></div>
+      </div>
+    </section>
+
+    <!-- 5. BROADCAST -->
     <section data-pane="broadcast" class="hidden">
       <div class="grid2">
         <div class="card"><div class="card-h"><h3>التعميمات المرسلة</h3></div><div class="card-b" id="bc-list"></div></div>
         <div class="card"><div class="card-h"><h3>تعميم جديد</h3></div><div class="pad">
-          <label for="bc-title">العنوان</label><input id="bc-title" maxlength="80">
+          <label for="bc-title">العنوان</label><input id="bc-title" maxlength="80" placeholder="تنبيه صيانة أو تحديث">
           <label for="bc-pri">الأولوية</label><select id="bc-pri"><option value="NORMAL">عادي</option><option value="HIGH">عالي الأهمية / طوارئ</option></select>
           <label for="bc-body">نص التعميم</label><textarea id="bc-body" rows="4" maxlength="500"></textarea>
           <button class="btn primary" id="bc-send" style="margin-top:14px">إرسال لكل الهواتف</button>
@@ -194,6 +213,7 @@ body.light .modal{background:rgba(15,23,42,.35)}
       </div>
     </section>
 
+    <!-- 6. AUDIT -->
     <section data-pane="audit" class="hidden">
       <div class="bar"><select id="audit-f">
         <option value="ALL">كل الإجراءات</option>
@@ -201,13 +221,16 @@ body.light .modal{background:rgba(15,23,42,.35)}
         <option value="PAYMENT_REJECTED">رفض طلب دفع</option>
         <option value="PLAN_EXTENDED">تمديد اشتراك</option>
         <option value="ACCOUNT_SUSPENDED">تجميد حساب</option>
-        <option value="ACCOUNT_UNSUSPENDED">رفع التجميد</option>
+        <option value="ADMIN_CREATED">إنشاء مشرف إداري</option>
+        <option value="ADMIN_UPDATED">تعديل صلاحيات مشرف</option>
+        <option value="ADMIN_DELETED">حذف مشرف</option>
         <option value="BROADCAST_SENT">إرسال تعميم</option>
         <option value="VERSION_UPDATED">تحديث الإصدار</option>
       </select></div>
       <div class="card"><div class="card-b wrap" id="audit-list"></div></div>
     </section>
 
+    <!-- 7. VERSION CONTROL -->
     <section data-pane="version" class="hidden">
       <div class="grid2">
         <div class="card"><div class="card-h"><h3>إعدادات الإصدار</h3><span class="muted mono">app_system/version_control</span></div><div class="pad">
@@ -225,79 +248,81 @@ body.light .modal{background:rgba(15,23,42,.35)}
         <div class="card"><div class="card-h"><h3>الحالة الحالية</h3></div><div class="card-b" id="v-live"></div></div>
       </div>
     </section>
-
-    <section data-pane="settings" class="hidden">
-      <div class="settings-grid">
-        <div class="card">
-          <div class="card-h"><h3 data-t="settings_title">إعدادات النظام</h3></div>
-          <div class="pad">
-            <label data-t="theme_label">المظهر</label>
-            <div class="settings-actions">
-              <button class="btn" id="theme-dark" data-t="dark_mode">الوضع الليلي</button>
-              <button class="btn" id="theme-light" data-t="light_mode">الوضع النهاري</button>
-            </div>
-            <label data-t="language_label">اللغة</label>
-            <div class="settings-actions">
-              <button class="btn" id="lang-ar">العربية</button>
-              <button class="btn" id="lang-en">English</button>
-            </div>
-            <label data-t="password_label">تغيير كلمة مرور حسابك</label>
-            <input id="new-pass" type="password" minlength="6" placeholder="كلمة المرور الجديدة">
-            <input id="new-pass2" type="password" minlength="6" placeholder="تأكيد كلمة المرور الجديدة" style="margin-top:8px">
-            <button class="btn primary" id="change-pass" style="margin-top:12px" data-t="change_password">تغيير كلمة المرور</button>
-          </div>
-        </div>
-
-        <div class="card" id="admin-management-card">
-          <div class="card-h"><h3 data-t="admins_title">مديرو النظام والمستخدمون الإداريون</h3></div>
-          <div class="pad">
-            <p class="muted" data-t="admins_note">يمكن للمدير الرئيسي إنشاء حسابات إدارية وتحديد صلاحيات كل حساب.</p>
-            <label data-t="display_name">الاسم</label><input id="admin-name" placeholder="اسم المستخدم">
-            <label data-t="username_label">اسم المستخدم</label><input id="admin-username" placeholder="مثال: ali_admin" autocomplete="off">
-            <label data-t="email_label">البريد الإلكتروني</label><input id="admin-email" type="email" placeholder="user@example.com" autocomplete="off">
-            <label data-t="password_create">كلمة المرور</label><input id="admin-pass" type="password" minlength="6" placeholder="6 أحرف على الأقل" autocomplete="new-password">
-            <label data-t="permissions_label">الصلاحيات</label>
-            <div class="permission-grid">
-              <label class="permission-item"><input type="checkbox" data-perm="overview" checked><span data-t="perm_overview">نظرة عامة</span></label>
-              <label class="permission-item"><input type="checkbox" data-perm="payments"><span data-t="perm_payments">طلبات التفعيل</span></label>
-              <label class="permission-item"><input type="checkbox" data-perm="agents"><span data-t="perm_agents">الوكلاء</span></label>
-              <label class="permission-item"><input type="checkbox" data-perm="broadcast"><span data-t="perm_broadcast">الإشعارات</span></label>
-              <label class="permission-item"><input type="checkbox" data-perm="audit"><span data-t="perm_audit">سجل العمليات</span></label>
-              <label class="permission-item"><input type="checkbox" data-perm="version"><span data-t="perm_version">الإصدارات</span></label>
-              <label class="permission-item"><input type="checkbox" data-perm="settings"><span data-t="perm_settings">الإعدادات</span></label>
-            </div>
-            <button class="btn primary" id="create-admin" style="margin-top:14px" data-t="create_admin">إنشاء المستخدم الإداري</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="card" style="margin-top:16px" id="admin-list-card">
-        <div class="card-h"><h3 data-t="admin_list_title">الحسابات الإدارية</h3></div>
-        <div class="card-b wrap admin-list" id="admin-list"></div>
-      </div>
-    </section>
-
   </main>
 </div>
 
+<!-- REJECT MODAL -->
 <div class="modal hidden" id="reject-modal"><div class="box">
   <h3>رفض الطلب</h3><p class="muted" id="reject-desc"></p>
-  <label for="reject-reason">سبب الرفض (يظهر للوكيل)</label>
-  <input id="reject-reason" maxlength="120" placeholder="مثال: رقم الحوالة غير مطابق">
+  <label for="reject-reason">سبب الرفض (يظهر للوكيل بالتطبيق)</label>
+  <input id="reject-reason" maxlength="120" placeholder="مثال: رقم الحوالة غير مطابق أو لم يصل المبلغ">
   <div class="row-actions" style="margin-top:16px"><button class="btn bad" id="reject-ok">تأكيد الرفض</button><button class="btn" id="reject-cancel">إلغاء</button></div>
 </div></div>
+
+<!-- RECEIPT MODAL -->
 <div class="modal hidden" id="receipt-modal"><div class="box" style="max-width:640px">
-  <div class="row-actions" style="justify-content:space-between"><h3>وصل الحوالة</h3><button class="btn sm" id="receipt-close">إغلاق</button></div>
-  <img id="receipt-img" alt="وصل الحوالة">
+  <div class="row-actions" style="justify-content:space-between"><h3>وصل الحوالة المرفق</h3><button class="btn sm" id="receipt-close">إغلاق</button></div>
+  <img id="receipt-img" alt="وصل الحوالة" style="width:100%;border-radius:10px;margin-top:12px;max-height:75vh;object-fit:contain;background:#000">
 </div></div>
+
+<!-- ADD / EDIT ADMIN MODAL -->
+<div class="modal hidden" id="admin-modal"><div class="box" style="max-width:540px">
+  <div class="row-actions" style="justify-content:space-between">
+    <h3 id="admin-modal-title">إضافة مستخدم إداري جديد</h3>
+    <button class="btn sm" id="admin-modal-close">✕</button>
+  </div>
+
+  <form id="admin-form" style="margin-top:12px">
+    <input type="hidden" id="adm-id">
+    
+    <label for="adm-name">اسم المشرف</label>
+    <input id="adm-name" required placeholder="مثال: أحمد عبد الله">
+
+    <label for="adm-email">البريد الإلكتروني (لتسجيل الدخول)</label>
+    <input id="adm-email" type="email" required placeholder="staff@example.com">
+
+    <div id="adm-pass-group">
+      <label for="adm-pass">كلمة المرور (6 أحرف على الأقل)</label>
+      <input id="adm-pass" type="password" placeholder="••••••••">
+    </div>
+
+    <label for="adm-role">المسمى الوظيفي / الدور</label>
+    <input id="adm-role" placeholder="مثال: مدقق طلبات التفعيل">
+
+    <label style="margin-top:16px">القوالب السريعة للصلاحيات:</label>
+    <div class="presets">
+      <button type="button" class="btn sm" data-preset="payments_only">مدقق طلبات فقط</button>
+      <button type="button" class="btn sm" data-preset="view_only">مشاهدة وتقارير فقط</button>
+      <button type="button" class="btn sm" data-preset="agents_mgr">مدير وكلاء واشتراكات</button>
+      <button type="button" class="btn sm" data-preset="full">صلاحيات كاملة</button>
+    </div>
+
+    <label style="margin-top:10px">تعيين الصلاحيات المستقلة والدقيقة:</label>
+    <div class="perm-grid">
+      <label class="perm-item"><input type="checkbox" id="p-view_payments"> <span>مشاهدة طلبات التفعيل</span></label>
+      <label class="perm-item"><input type="checkbox" id="p-approve_payments"> <span>الموافقة على الطلبات</span></label>
+      <label class="perm-item"><input type="checkbox" id="p-reject_payments"> <span>رفض الطلبات</span></label>
+      <label class="perm-item"><input type="checkbox" id="p-manage_agents"> <span>إدارة الوكلاء (تجميد/تمديد)</span></label>
+      <label class="perm-item"><input type="checkbox" id="p-manage_subscribers"> <span>إدارة المشتركين</span></label>
+      <label class="perm-item"><input type="checkbox" id="p-manage_subscriptions"> <span>إنشاء وتجديد الاشتراكات</span></label>
+      <label class="perm-item"><input type="checkbox" id="p-view_reports"> <span>عرض التقارير والبيانات المالية</span></label>
+      <label class="perm-item"><input type="checkbox" id="p-manage_settings"> <span>إدارة الإعدادات والتعميمات</span></label>
+    </div>
+
+    <div class="row-actions" style="margin-top:20px;justify-content:flex-end">
+      <button type="button" class="btn" id="adm-cancel">إلغاء</button>
+      <button type="submit" class="btn primary" id="adm-submit">حفظ المشرف</button>
+    </div>
+  </form>
+</div></div>
+
 <div id="toast" role="status"></div>
 
 <script type="module">
-import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, createUserWithEmailAndPassword, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, query, limit, onSnapshot, doc, getDoc, writeBatch, addDoc, setDoc, getDocs, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, query, limit, onSnapshot, doc, getDoc, writeBatch, addDoc, setDoc, deleteDoc, updateDoc, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyBMWq8i9SmpaKcMvMXq2gv-mTOdth6Vcxg",
   authDomain: "project-f061b9fc-2e38-4f9b-86d.firebaseapp.com",
@@ -307,105 +332,215 @@ const firebaseConfig = {
   appId: "1:375448237527:web:605a801bb22deb312a0792",
   measurementId: "G-50V9G32XXZ"
 };
-const ADMIN_EMAIL = "mantime50@gmail.com";
+const SUPER_ADMIN_EMAIL = "mantime50@gmail.com";
 const SUBSCRIPTION_DAYS = 30;
 
-const C = { USERS:"users", PAY:"payment_requests", BC:"system_broadcasts", AUDIT:"audit_logs" };
+const C = { USERS:"users", PAY:"payment_requests", BC:"system_broadcasts", AUDIT:"audit_logs", ADMINS:"admin_users" };
 const VER = ["app_system","version_control"];
-const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getFirestore(app, "ai-studio-netfluoadminagen-472f1dd6-1fad-4622-b483-3bdc51a7bd41");const $ = (s,r=document) => r.querySelector(s), $$ = (s,r=document) => [...r.querySelectorAll(s)];
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const $ = (s,r=document) => r.querySelector(s);
+const $$ = (s,r=document) => [...r.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmt = ts => ts?.toDate ? ts.toDate().toLocaleString("ar-IQ",{dateStyle:"medium",timeStyle:"short"}) : "—";
 const fmtD = ts => ts?.toDate ? ts.toDate().toLocaleDateString("ar-IQ",{dateStyle:"medium"}) : "—";
-const LBL = { PENDING:"بانتظار القرار", APPROVED:"مقبول", REJECTED:"مرفوض", ACTIVE:"فعّال", EXPIRED:"منتهي", SUSPENDED:"مجمّد", ADMIN:"مدير", AGENT:"وكيل", NORMAL:"عادي", HIGH:"عاجل" };
-const tag = v => `<span class="tag t-${esc(v)}">${LBL[v] || esc(v || "—")}</span>`;
-const ACTIONS = { SUBSCRIPTION_ACTIVATED:"تفعيل اشتراك", PAYMENT_REJECTED:"رفض طلب", PLAN_EXTENDED:"تمديد اشتراك", ACCOUNT_SUSPENDED:"تجميد حساب", BROADCAST_SENT:"إرسال تعميم", VERSION_UPDATED:"تحديث الإصدار", AGENT_REGISTERED:"تسجيل وكيل", ACCOUNT_UNSUSPENDED:"رفع التجميد" };
 
-const S = { pay:[], users:[], audit:[], bc:[], ver:null, filter:"PENDING", me:null, unsubs:[], rejectId:null };
-const TITLES = {
-  overview:["نظرة عامة","ما يحتاج انتباهك الآن"],
-  payments:["طلبات التفعيل","طابق الحوالات وقرّر القبول أو الرفض"],
-  agents:["الوكلاء","الحسابات المسجّلة وحالة اشتراكاتها"],
-  broadcast:["التعميمات","رسالة تظهر لكل الوكلاء على هواتفهم"],
-  audit:["سجل العمليات","كل إجراء إداري موثّق ولا يمكن حذفه"],
-  version:["الإصدارات والتحديث","تحكم في آخر إصدار وفرض التحديث"],
-  settings:["الإعدادات","المظهر واللغة وكلمات المرور والحسابات الإدارية"]
+const PERM_LABELS = {
+  view_payments: "مشاهدة الطلبات",
+  approve_payments: "الموافقة على الطلبات",
+  reject_payments: "رفض الطلبات",
+  manage_agents: "إدارة الوكلاء",
+  manage_subscribers: "إدارة المشتركين",
+  manage_subscriptions: "إنشاء وتجديد الاشتراكات",
+  view_reports: "التقارير والمالية",
+  manage_settings: "إدارة الإعدادات"
 };
 
-function toast(m, err=false){ const t=$("#toast"); t.textContent=m; t.className="show"+(err?" err":""); clearTimeout(toast.t); toast.t=setTimeout(()=>t.className="",2800); }
-setInterval(()=>$("#clock").textContent=new Date().toLocaleTimeString("ar-IQ"),1000);
+const LBL = { PENDING:"بانتظار القرار", APPROVED:"مقبول", REJECTED:"مرفوض", ACTIVE:"فعّال", EXPIRED:"منتهي", SUSPENDED:"مجمّد", ADMIN:"مدير", AGENT:"وكيل", NORMAL:"عادي", HIGH:"عاجل" };
+const tag = v => `<span class="tag t-${esc(v)}">${LBL[v] || esc(v || "—")}</span>`;
+
+const S = {
+  pay: [],
+  users: [],
+  audit: [],
+  bc: [],
+  admins: [],
+  ver: null,
+  filter: "PENDING",
+  me: null,
+  perms: {},
+  isSuper: false,
+  unsubs: [],
+  rejectId: null
+};
+
+const TITLES = {
+  overview: ["نظرة عامة", "لوحة القيادة والمتابعة اللحظية"],
+  payments: ["طلبات التفعيل", "مطابقة الحوالات والموافقة أو الرفض"],
+  agents: ["الوكلاء", "الحسابات المسجّلة وحالة اشتراكاتها وتجديدها"],
+  admins: ["المشرفون والصلاحيات", "إدارة المستخدمين الإداريين ومنح الصلاحيات المستقلة الدقيقة"],
+  broadcast: ["التعميمات", "إرسال إشعارات مباشرة إلى هواتف الوكلاء"],
+  audit: ["سجل العمليات", "توثيق كامل لكافة الإجراءات والقرارات الإدارية"],
+  version: ["الإصدارات والتحديث", "التحكم في تحديثات التطبيق وفرض التحديثات"]
+};
+
+function toast(m, err=false){
+  const t = $("#toast");
+  t.textContent = m;
+  t.className = "show" + (err ? " err" : "");
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => t.className = "", 2800);
+}
+setInterval(() => $("#clock").textContent = new Date().toLocaleTimeString("ar-IQ"), 1000);
+
+/* فحص الصلاحية */
+function can(p) {
+  if (S.isSuper) return true;
+  return S.perms && S.perms[p] === true;
+}
 
 /* التنقل */
 function show(v){
-  $$("[data-pane]").forEach(p=>p.classList.toggle("hidden",p.dataset.pane!==v));
-  $$(".nav").forEach(n=>n.classList.toggle("active",n.dataset.view===v));
-  $("#title").textContent=TITLES[v][0]; $("#subtitle").textContent=TITLES[v][1]; location.hash=v;
-  if(v==="settings" && typeof loadAdminProfiles==="function") loadAdminProfiles();
-}
-$$(".nav").forEach(n=>n.onclick=()=>show(n.dataset.view));
-$$("[data-go]").forEach(b=>b.onclick=()=>show(b.dataset.go));
-$$("#pay-tabs .btn").forEach(b=>b.onclick=()=>{ S.filter=b.dataset.f; $$("#pay-tabs .btn").forEach(x=>x.classList.toggle("on",x===b)); renderPayments(); });
-$("#pay-q").oninput=renderPayments; $("#agent-q").oninput=renderAgents; $("#audit-f").onchange=renderAudit;
-
-/* الدخول */
-$("#login-form").onsubmit = async e => {
-  e.preventDefault(); const btn=$("#l-btn"); btn.disabled=true; $("#login-err").textContent="";
-  try{ await signInWithEmailAndPassword(auth,$("#l-email").value.trim(),$("#l-pass").value); }
-  catch(err){ $("#login-err").textContent="البريد أو كلمة المرور غير صحيحة."; }
-  btn.disabled=false;
-};
-$("#btn-out").onclick=()=>signOut(auth);
-
-async function isAdmin(u){
-  if(u.email && u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase()) return true;
-  try{
-    const t=await u.getIdTokenResult(true);
-    if(t.claims.admin===true) return true;
-    const p=await getDoc(doc(db,"admin_users",u.uid));
-    return p.exists() && p.data().active!==false;
-  }catch(e){ return false; }
-}
-
-onAuthStateChanged(auth, async user=>{
-  S.unsubs.forEach(u=>u()); S.unsubs=[];
-  if(!user){ $("#app").classList.add("hidden"); $("#login").classList.remove("hidden"); return; }
-  const isAdm = await isAdmin(user);
-  if(!isAdm){
-    $("#login-err").textContent="هذا الحساب ليس له صلاحية الإدارة."; 
-    await signOut(auth); 
-    return; 
+  if (v === "admins" && !S.isSuper && !can("manage_settings")) {
+    toast("غير مصرح لك بالوصول لإدارة المشرفين", true);
+    return;
   }
-  S.me=user; $("#me-email").textContent=user.email;
-  $("#login").classList.add("hidden"); $("#app").classList.remove("hidden");
-  await applyPermissions(user);
-  show(TITLES[location.hash.slice(1)]?location.hash.slice(1):"overview"); 
+  if (v === "payments" && !can("view_payments")) {
+    toast("غير مصرح لك بمشاهدة طلبات التفعيل", true);
+    return;
+  }
+  if (v === "version" && !can("manage_settings")) {
+    toast("غير مصرح لك بإدارة الإصدارات", true);
+    return;
+  }
+
+  $$("[data-pane]").forEach(p => p.classList.toggle("hidden", p.dataset.pane !== v));
+  $$(".nav").forEach(n => n.classList.toggle("active", n.dataset.view === v));
+  if (TITLES[v]) {
+    $("#title").textContent = TITLES[v][0];
+    $("#subtitle").textContent = TITLES[v][1];
+  }
+  location.hash = v;
+}
+$$(".nav").forEach(n => n.onclick = () => show(n.dataset.view));
+$$("[data-go]").forEach(b => b.onclick = () => show(b.dataset.go));
+$$("#pay-tabs .btn").forEach(b => b.onclick = () => {
+  S.filter = b.dataset.f;
+  $$("#pay-tabs .btn").forEach(x => x.classList.toggle("on", x === b));
+  renderPayments();
+});
+$("#pay-q").oninput = renderPayments;
+$("#agent-q").oninput = renderAgents;
+$("#admin-q").oninput = renderAdmins;
+$("#audit-f").onchange = renderAudit;
+
+/* الدخول والتحقق من الصلاحيات */
+$("#login-form").onsubmit = async e => {
+  e.preventDefault();
+  const btn = $("#l-btn");
+  btn.disabled = true;
+  $("#login-err").textContent = "";
+  try {
+    await signInWithEmailAndPassword(auth, $("#l-email").value.trim(), $("#l-pass").value);
+  } catch(err) {
+    $("#login-err").textContent = "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
+  }
+  btn.disabled = false;
+};
+$("#btn-out").onclick = () => signOut(auth);
+
+async function resolveAdminAccess(u) {
+  const email = (u.email || "").toLowerCase();
+  if (email === SUPER_ADMIN_EMAIL.toLowerCase()) {
+    return {
+      isSuper: true,
+      email: u.email,
+      name: "المدير العام",
+      role: "المدير الرئيسي",
+      permissions: {
+        view_payments: true,
+        approve_payments: true,
+        reject_payments: true,
+        manage_agents: true,
+        manage_subscribers: true,
+        manage_subscriptions: true,
+        view_reports: true,
+        manage_settings: true
+      }
+    };
+  }
+
+  try {
+    const docSnap = await getDoc(doc(db, C.ADMINS, u.uid));
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      if (data.active === false) {
+        return { error: "تم تعطيل هذا الحساب الإداري من قبل الإدارة العامة." };
+      }
+      return {
+        isSuper: false,
+        email: u.email,
+        name: data.name || "مشرف إداري",
+        role: data.role || "مشرف",
+        permissions: data.permissions || {}
+      };
+    }
+  } catch (err) {
+    console.warn("Could not fetch admin_users doc:", err);
+  }
+  return null;
+}
+
+onAuthStateChanged(auth, async user => {
+  S.unsubs.forEach(u => u());
+  S.unsubs = [];
+  if (!user) {
+    $("#app").classList.add("hidden");
+    $("#login").classList.remove("hidden");
+    return;
+  }
+
+  const access = await resolveAdminAccess(user);
+  if (!access || access.error) {
+    $("#login-err").textContent = access?.error || "هذا الحساب ليس له صلاحيات إدارية.";
+    await signOut(auth);
+    return;
+  }
+
+  S.me = user;
+  S.isSuper = access.isSuper;
+  S.perms = access.permissions;
+
+  $("#me-email").textContent = user.email;
+  $("#me-role").textContent = access.role + (access.isSuper ? " (كامل الصلاحيات)" : "");
+
+  // تطبيق قيود الواجهة بناءً على الصلاحيات
+  applyUiPermissions();
+
+  $("#login").classList.add("hidden");
+  $("#app").classList.remove("hidden");
+  show(TITLES[location.hash.slice(1)] ? location.hash.slice(1) : "overview");
   listen();
 });
 
-
-async function applyPermissions(user){
-  const perms={overview:true,payments:true,agents:true,broadcast:true,audit:true,version:true,settings:true};
-  if(user.email?.toLowerCase()!==ADMIN_EMAIL.toLowerCase()){
-    const p=await getDoc(doc(db,"admin_users",user.uid));
-    Object.assign(perms,p.exists()?p.data().permissions||{}:{});
-  }
-  $$(".nav[data-view]").forEach(n=>n.classList.toggle("hidden",perms[n.dataset.view]!==true));
-  // Hide settings administration card for non-master users.
-  if(user.email?.toLowerCase()!==ADMIN_EMAIL.toLowerCase()) $("#admin-management-card")?.classList.add("hidden");
-  if(!perms[location.hash.slice(1)]){
-    const first=Object.keys(perms).find(k=>perms[k]===true)||"overview";
-    show(first);
-  }
+function applyUiPermissions() {
+  $("#nav-btn-payments").classList.toggle("hidden", !can("view_payments"));
+  $("#nav-btn-agents").classList.toggle("hidden", !can("manage_agents") && !can("manage_subscriptions"));
+  $("#nav-btn-admins").classList.toggle("hidden", !S.isSuper && !can("manage_settings"));
+  $("#nav-btn-broadcast").classList.toggle("hidden", !can("manage_settings"));
+  $("#nav-btn-version").classList.toggle("hidden", !can("manage_settings"));
 }
 
 /* استماع البيانات الحية */
 function listen(){
-  const ok=()=>{ $("#live").className="live"; $("#live").textContent="متصل"; };
-  const bad=e=>{ 
-    console.error("Firestore Listen Error:", e); 
-    $("#live").className="live off"; 
-    const msg = e?.code === "permission-denied" ? "انقطع الاتصال (تحقق من صلاحيات المدير)" : "انقطع الاتصال";
-    $("#live").textContent = msg;
-    toast(msg, true);
+  const ok = () => { $("#live").className = "live"; $("#live").textContent = "متصل"; };
+  const bad = e => {
+    console.error("Firestore Listen Error:", e);
+    $("#live").className = "live off";
+    $("#live").textContent = "انقطع الاتصال";
   };
 
   const getSec = (d, f) => d[f]?.seconds || d.submittedAt?.seconds || d.createdAt?.seconds || d.created_at?.seconds || d.timestamp?.seconds || (d.created_timestamp_ms ? Math.floor(d.created_timestamp_ms/1000) : 0);
@@ -413,8 +548,7 @@ function listen(){
   const sub = (col, f, n, key) => S.unsubs.push(
     onSnapshot(query(collection(db, col), limit(n)), s => {
       S[key] = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => getSec(b, f) - getSec(a, f));
-      if (key === "users") { S.allUsers = S[key]; S[key] = dedupeUsers(S[key]); }
-      ok(); 
+      ok();
       renderAll();
     }, bad)
   );
@@ -422,378 +556,682 @@ function listen(){
   sub(C.PAY, "submittedAt", 500, "pay");
   sub(C.USERS, "createdAt", 1000, "users");
   sub(C.AUDIT, "at", 500, "audit");
-  sub(C.BC, "createdAt", 100, "bc");
-  S.unsubs.push(onSnapshot(doc(db,...VER), s => { S.ver = s.exists() ? s.data() : {}; renderVersion(true); }, bad));
+  sub(C.BC, "createdAt", 50, "bc");
+  sub(C.ADMINS, "createdAt", 100, "admins");
+
+  // Version listener
+  S.unsubs.push(onSnapshot(doc(db, ...VER), d => {
+    S.ver = d.data() || {};
+    renderVersion();
+  }));
 }
 
-/* العرض */
-function renderAll(){ renderStats(); renderOverview(); renderPayments(); renderAgents(); renderAudit(); renderBroadcasts(); }
-function renderStats(){
-  const p=S.pay.filter(x=>(x.status||"PENDING").toUpperCase()==="PENDING").length;
-  $("#s-pending").textContent=p; $("#s-agents").textContent=S.users.length;
-  $("#s-active").textContent=S.users.filter(u=>(u.subscriptionStatus||u.status||"").toUpperCase()==="ACTIVE").length; $("#s-bc").textContent=S.bc.length;
-  const a=$("#nav-pending"); a.textContent=p; a.classList.toggle("zero",!p);
-  const b=$("#nav-agents"); b.textContent=S.users.length; b.classList.toggle("zero",!S.users.length);
+function renderAll(){
+  renderOverview();
+  renderPayments();
+  renderAgents();
+  renderAdmins();
+  renderBroadcast();
+  renderAudit();
+  renderVersion();
 }
-const planOf = p => p.planType || p.plan_type || p.plan || "شهري";
-function payTable(list, full){
-  return `<table><thead><tr><th>الوكيل</th><th>الباقة</th><th>المبلغ</th><th>طريقة الدفع</th><th>رقم الحوالة</th><th>التاريخ</th>${full?"<th>الحالة</th>":""}<th></th></tr></thead><tbody>`+
-  list.map(p=>{
-    const email = p.agentEmail || p.email || "—";
-    const txId = p.transactionId || p.transaction_id || p.txId || "—";
-    const dateTs = p.submittedAt || p.createdAt || p.created_at || p.timestamp;
-    const isPending = (p.status || "PENDING").toUpperCase() === "PENDING";
-    const amountVal = p.amount ?? p.amount_iqd ?? "—";
-    const methodVal = p.paymentMethod || p.payment_method || p.method || "—";
 
-    return `<tr><td>${esc(email)}</td><td>${esc(planOf(p))}</td><td>${esc(amountVal)}</td><td>${esc(methodVal)}</td>
-      <td class="mono">${esc(txId)}</td><td class="muted">${fmt(dateTs)}</td>
-      ${full?`<td>${tag((p.status||"PENDING").toUpperCase())}${p.rejectReason?`<div class="muted">${esc(p.rejectReason)}</div>`:""}</td>`:""}
-      <td><div class="row-actions">
-        ${(p.receiptUrl||p.receiptImage)?`<button class="btn sm" data-act="receipt" data-id="${esc(p.id)}">الوصل</button>`:""}
-        ${isPending?`<button class="btn sm ok" data-act="approve" data-id="${esc(p.id)}">قبول</button><button class="btn sm bad" data-act="reject" data-id="${esc(p.id)}">رفض</button>`:""}
-      </div></td></tr>`;
-  }).join("")+"</tbody></table>";
-}
+/* 1. OVERVIEW */
 function renderOverview(){
-  const p=S.pay.filter(x=>(x.status||"PENDING").toUpperCase()==="PENDING").slice(0,5);
-  $("#ov-pending").innerHTML=p.length?payTable(p,false):`<div class="empty">لا توجد طلبات معلّقة. كل شيء مُراجَع.</div>`;
-  const l=S.audit.slice(0,6); $("#ov-audit").innerHTML=l.length?l.map(logRow).join(""):`<div class="empty">لا توجد عمليات بعد.</div>`;
+  const pending = S.pay.filter(p => (p.status || "PENDING").toUpperCase() === "PENDING").length;
+  const activeSubs = S.users.filter(u => u.subscriptionStatus === "ACTIVE" || u.is_subscribed === true).length;
+  const totalRev = S.pay.filter(p => (p.status || "").toUpperCase() === "APPROVED").reduce((sum, p) => sum + (p.amount_iqd || p.amount || 10000), 0);
+
+  $("#s-pending").textContent = pending;
+  $("#s-agents").textContent = S.users.length;
+  $("#s-active").textContent = activeSubs;
+  $("#s-revenue").textContent = totalRev.toLocaleString("ar-IQ") + " د.ع";
+
+  $("#nav-pending").textContent = pending;
+  $("#nav-pending").classList.toggle("zero", !pending);
+  $("#nav-agents").textContent = S.users.length;
+  $("#nav-agents").classList.toggle("zero", !S.users.length);
+
+  // Recent Pending
+  const ovP = $("#ov-pending");
+  const pList = S.pay.filter(p => (p.status || "PENDING").toUpperCase() === "PENDING").slice(0, 5);
+  if (!pList.length) {
+    ovP.innerHTML = `<div class="empty">لا توجد طلبات معلقة حالياً 🎉</div>`;
+  } else {
+    ovP.innerHTML = `<table>
+      <thead><tr><th>الوكيل</th><th>الباقة</th><th>المبلغ</th><th>الحوالة</th><th>إجراء</th></tr></thead>
+      <tbody>${pList.map(p => {
+        const plan = p.plan_type || p.planType || "MONTHLY";
+        const amt = (p.amount_iqd || p.amount || 10000).toLocaleString("ar-IQ") + " د.ع";
+        const tx = p.transactionId || p.transaction_id || "—";
+        const email = p.agentEmail || p.email || "";
+        const approveBtn = can("approve_payments") ? `<button class="btn ok sm" data-act="approve" data-id="${p.id}">قبول</button>` : '';
+        const rejectBtn = can("reject_payments") ? `<button class="btn bad sm" data-act="reject" data-id="${p.id}">رفض</button>` : '';
+        return `<tr>
+          <td><b>${esc(email)}</b></td>
+          <td>${esc(plan)}</td>
+          <td class="mono" style="color:var(--ok);font-weight:700">${amt}</td>
+          <td class="mono">${esc(tx)}</td>
+          <td><div class="row-actions">${approveBtn}${rejectBtn}</div></td>
+        </tr>`;
+      }).join("")}</tbody>
+    </table>`;
+  }
+
+  // Recent Audit
+  const ovA = $("#ov-audit");
+  const aList = S.audit.slice(0, 6);
+  if (!aList.length) {
+    ovA.innerHTML = `<div class="empty">لا توجد عمليات مسجلة بعد</div>`;
+  } else {
+    ovA.innerHTML = aList.map(a => `
+      <div class="log">
+        <span class="dot"></span>
+        <div style="flex:1">
+          <div><b>${esc(a.summary || a.details || a.action || "")}</b></div>
+          <div class="muted">${fmt(a.at || a.timestamp)} · ${esc(a.by || a.performed_by_email || "النظام")}</div>
+        </div>
+      </div>
+    `).join("");
+  }
 }
+
+/* 2. PAYMENTS */
 function renderPayments(){
-  const q=$("#pay-q").value.trim().toLowerCase();
-  const list=S.pay.filter(p=>{
-    const st=(p.status||"PENDING").toUpperCase();
-    const matchFilter = (S.filter==="ALL" || st===S.filter);
-    const em=(p.agentEmail || p.email || "").toLowerCase();
-    const tx=(p.transactionId || p.transaction_id || "").toLowerCase();
-    return matchFilter && (!q || em.includes(q) || tx.includes(q));
+  const q = ($("#pay-q").value || "").trim().toLowerCase();
+  const f = S.filter;
+  const list = S.pay.filter(p => {
+    const st = (p.status || "PENDING").toUpperCase();
+    if (f !== "ALL" && st !== f) return false;
+    if (!q) return true;
+    const email = (p.agentEmail || p.email || "").toLowerCase();
+    const tx = (p.transactionId || p.transaction_id || "").toLowerCase();
+    return email.includes(q) || tx.includes(q);
   });
-  $("#pay-list").innerHTML=list.length?payTable(list,true):`<div class="empty">لا توجد طلبات مطابقة.</div>`;
+
+  const c = $("#pay-list");
+  if (!list.length) {
+    c.innerHTML = `<div class="empty">لا توجد طلبات مطابقة</div>`;
+    return;
+  }
+
+  c.innerHTML = `<table>
+    <thead><tr><th>الوكيل</th><th>الباقة</th><th>المبلغ</th><th>طريقة الدفع</th><th>رقم الحوالة</th><th>الوصل</th><th>الوقت</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
+    <tbody>${list.map(p => {
+      const email = p.agentEmail || p.email || "";
+      const plan = p.plan_type || p.planType || "MONTHLY";
+      const amt = (p.amount_iqd || p.amount || (plan==="ANNUAL"?50000:plan==="SEMI_ANNUAL"?25000:10000)).toLocaleString("ar-IQ") + " د.ع";
+      const method = (p.payment_method || p.paymentMethod || "").toUpperCase() === "ZAIN_CASH" ? "زين كاش" : "حساب QI";
+      const tx = p.transactionId || p.transaction_id || "—";
+      const receipt = p.receipt_url || p.receiptUrl || p.receiptImage;
+      const receiptBtn = receipt ? `<button class="btn sm" data-act="receipt" data-id="${p.id}">معاينة 📎</button>` : `<span class="muted">بدون</span>`;
+      const st = (p.status || "PENDING").toUpperCase();
+      const isPending = st === "PENDING";
+
+      const approveBtn = (isPending && can("approve_payments")) ? `<button class="btn ok sm" data-act="approve" data-id="${p.id}">✅ قبول</button>` : '';
+      const rejectBtn = (isPending && can("reject_payments")) ? `<button class="btn bad sm" data-act="reject" data-id="${p.id}">❌ رفض</button>` : '';
+
+      return `<tr>
+        <td><b>${esc(email)}</b></td>
+        <td>${tag(plan)}</td>
+        <td class="mono" style="color:var(--ok);font-weight:700">${amt}</td>
+        <td>${esc(method)}</td>
+        <td class="mono" style="font-weight:700;color:var(--accent)">${esc(tx)}</td>
+        <td>${receiptBtn}</td>
+        <td class="muted">${fmt(p.submittedAt || p.createdAt || p.created_at)}</td>
+        <td>${tag(st)}</td>
+        <td><div class="row-actions">${approveBtn}${rejectBtn}</div></td>
+      </tr>`;
+    }).join("")}</tbody>
+  </table>`;
 }
+
+/* 3. AGENTS */
 function renderAgents(){
-  const q=$("#agent-q").value.trim().toLowerCase(); const list=S.users.filter(u=>!q||(u.email||"").toLowerCase().includes(q));
-  $("#agent-list").innerHTML=list.length?`<table><thead><tr><th>البريد</th><th>الاشتراك</th><th>الباقة</th><th>ينتهي في</th><th>المشتركون</th><th>آخر دخول</th><th></th></tr></thead><tbody>`+
-  list.map(u=>`<tr><td>${esc(u.email)}${u.role==="ADMIN"?" "+tag("ADMIN"):""}</td><td>${tag(isSusp(u)?"SUSPENDED":(u.subscriptionStatus||u.status||"EXPIRED"))}</td><td>${esc(u.planType||u.plan_type||"—")}</td><td class="muted">${fmtD(u.subscriptionEndsAt||u.subscription_expiry_timestamp)}</td>
-    <td>${esc(u.subscribersCount ?? "—")}</td><td class="muted">${fmt(u.lastLoginAt)}</td>
-    <td>${u.role==="ADMIN"?"":`<div class="row-actions"><button class="btn sm ok" data-act="extend" data-id="${esc(u.id)}">تمديد ${SUBSCRIPTION_DAYS} يوماً</button>${isSusp(u)?`<button class="btn sm ok" data-act="unsuspend" data-id="${esc(u.id)}">رفع التجميد</button>`:`<button class="btn sm bad" data-act="suspend" data-id="${esc(u.id)}">تجميد</button>`}</div>`}</td></tr>`).join("")+"</tbody></table>"
-  :`<div class="empty">لا يوجد وكلاء مطابقون.</div>`;
+  const q = ($("#agent-q").value || "").trim().toLowerCase();
+  const list = S.users.filter(u => {
+    if (!q) return true;
+    const email = (u.email || "").toLowerCase();
+    const name = (u.name || u.fullName || "").toLowerCase();
+    return email.includes(q) || name.includes(q);
+  });
+
+  const c = $("#agent-list");
+  if (!list.length) {
+    c.innerHTML = `<div class="empty">لا يوجد وكلاء مطابقون</div>`;
+    return;
+  }
+
+  c.innerHTML = `<table>
+    <thead><tr><th>الوكيل</th><th>حالة الحساب</th><th>انتهاء الاشتراك</th><th>تاريخ التسجيل</th><th>الإجراءات</th></tr></thead>
+    <tbody>${list.map(u => {
+      const email = u.email || "";
+      const name = u.name || u.fullName || "وكيل";
+      const st = u.subscriptionStatus || (u.is_subscribed ? "ACTIVE" : "EXPIRED");
+      const ends = u.subscriptionEndsAt || u.subscription_expiry_timestamp || u.subscriptionExpiryAt;
+
+      const extendBtn = can("manage_subscriptions") ? `<button class="btn sm ok" data-act="extend" data-id="${u.id}">تمديد 30 يوماً</button>` : '';
+      const suspendBtn = can("manage_agents") ? `<button class="btn sm bad" data-act="suspend" data-id="${u.id}">تجميد الحساب</button>` : '';
+
+      return `<tr>
+        <td><b>${esc(name)}</b><div class="muted">${esc(email)}</div></td>
+        <td>${tag(st)}</td>
+        <td class="mono">${fmtD(ends)}</td>
+        <td class="muted">${fmtD(u.createdAt || u.created_at)}</td>
+        <td><div class="row-actions">${extendBtn}${suspendBtn}</div></td>
+      </tr>`;
+    }).join("")}</tbody>
+  </table>`;
 }
-function logRow(l){ return `<div class="log"><span class="dot"></span><div><div>${esc(l.details||ACTIONS[l.action]||l.action)}</div><div class="muted">${esc(l.by)} · ${fmt(l.at)}</div></div></div>`; }
+
+/* 4. ADMINS & PERMISSIONS (إدارة المشرفين والصلاحيات) */
+function renderAdmins(){
+  const q = ($("#admin-q").value || "").trim().toLowerCase();
+  const list = S.admins.filter(a => {
+    if (!q) return true;
+    const email = (a.email || "").toLowerCase();
+    const name = (a.name || "").toLowerCase();
+    const role = (a.role || "").toLowerCase();
+    return email.includes(q) || name.includes(q) || role.includes(q);
+  });
+
+  $("#admins-count-label").textContent = `${S.admins.length} مشرف مسجل`;
+  $("#nav-admins").textContent = S.admins.length;
+  $("#nav-admins").classList.toggle("zero", !S.admins.length);
+
+  const c = $("#admin-list");
+  if (!list.length) {
+    c.innerHTML = `<div class="empty">لا يوجد مشرفون إداريون مضافون حالياً. يمكنك إضافة مشرف وتعيين صلاحياته.</div>`;
+    return;
+  }
+
+  c.innerHTML = `<table>
+    <thead><tr><th>المشرف</th><th>المسمى الوظيفي</th><th>الحالة</th><th>الصلاحيات الممنوحة</th><th>تاريخ الإضافة</th><th>الإجراءات</th></tr></thead>
+    <tbody>${list.map(a => {
+      const isSelf = S.me && S.me.email === a.email;
+      const isActive = a.active !== false;
+      const perms = a.permissions || {};
+      const permBadges = Object.keys(PERM_LABELS).map(k => {
+        const has = perms[k] === true;
+        return `<span class="perm-badge ${has ? "has" : ""}">${PERM_LABELS[k]} ${has ? "✓" : "✗"}</span>`;
+      }).join("");
+
+      const toggleBtn = `<button class="btn sm ${isActive ? "bad" : "ok"}" data-act="toggle-admin" data-id="${a.id}">${isActive ? "تعطيل" : "تفعيل"}</button>`;
+      const editBtn = `<button class="btn sm" data-act="edit-admin" data-id="${a.id}">✏️ تعديل الصلاحيات</button>`;
+      const delBtn = `<button class="btn sm bad" data-act="delete-admin" data-id="${a.id}">🗑️ حذف</button>`;
+
+      return `<tr>
+        <td>
+          <b>${esc(a.name || "مشرف")}</b>
+          <div class="muted mono">${esc(a.email || "")}</div>
+        </td>
+        <td><b>${esc(a.role || "مشرف")}</b></td>
+        <td>${tag(isActive ? "ACTIVE" : "SUSPENDED")}</td>
+        <td style="max-width:320px"><div style="display:flex;flex-wrap:wrap">${permBadges}</div></td>
+        <td class="muted">${fmtD(a.createdAt || a.created_at)}</td>
+        <td>
+          <div class="row-actions">
+            ${editBtn}
+            ${!isSelf ? toggleBtn : ""}
+            ${!isSelf ? delBtn : ""}
+          </div>
+        </td>
+      </tr>`;
+    }).join("")}</tbody>
+  </table>`;
+}
+
+/* 5. BROADCAST */
+function renderBroadcast(){
+  const c = $("#bc-list");
+  if (!S.bc.length) {
+    c.innerHTML = `<div class="empty">لا توجد تعميمات سابقة</div>`;
+    return;
+  }
+  c.innerHTML = S.bc.map(b => `
+    <div class="log" style="justify-content:space-between;align-items:center">
+      <div>
+        <div><b>${esc(b.title)}</b> ${tag(b.priority || "NORMAL")}</div>
+        <p style="margin:4px 0;font-size:13.5px">${esc(b.body)}</p>
+        <div class="muted">${fmt(b.createdAt)} · ${esc(b.createdBy || "")}</div>
+      </div>
+      <div>
+        <button class="btn sm ${b.active===false?"":"ok"}" data-act="toggle-bc" data-id="${b.id}">${b.active===false?"موقوف":"نشط"}</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+/* 6. AUDIT */
 function renderAudit(){
-  const f=$("#audit-f").value; const list=S.audit.filter(l=>f==="ALL"||l.action===f);
-  $("#audit-list").innerHTML=list.length?`<table><thead><tr><th>الإجراء</th><th>المنفّذ</th><th>الوكيل المستهدف</th><th>التفاصيل</th><th>الوقت</th></tr></thead><tbody>`+
-  list.map(l=>`<tr><td>${esc(ACTIONS[l.action]||l.action)}</td><td>${esc(l.by)}</td><td>${esc(l.target||"—")}</td><td>${esc(l.details||"")}</td><td class="muted">${fmt(l.at)}</td></tr>`).join("")+"</tbody></table>"
-  :`<div class="empty">لا توجد عمليات في هذا التصنيف.</div>`;
-}
-function renderBroadcasts(){
-  $("#bc-list").innerHTML=S.bc.length?S.bc.map(b=>`<div class="log"><span class="dot" style="background:${b.active===false?"var(--muted)":"var(--ok)"}"></span>
-    <div style="flex:1"><b>${esc(b.title)}</b> ${tag(b.priority||"NORMAL")}<div>${esc(b.body)}</div><div class="muted">${fmt(b.createdAt)}</div></div>
-    <button class="btn sm" data-act="toggle-bc" data-id="${esc(b.id)}">${b.active===false?"تفعيل":"إيقاف"}</button></div>`).join(""):`<div class="empty">لم تُرسل تعميمات بعد.</div>`;
-}
-function renderVersion(fill){
-  const v=S.ver||{};
-  if(fill){ $("#v-name").value=v.latest_version_name||""; $("#v-code").value=v.latest_version_code??""; $("#v-min").value=v.min_version_code??"";
-    $("#v-apk").value=v.apk_url||""; $("#v-notes").value=v.release_notes||""; $("#v-force").checked=!!v.is_force_update; }
-  $("#nav-ver").textContent=v.latest_version_name?"v"+v.latest_version_name:"";
-  const kv=(k,x)=>`<div class="kv"><span class="muted">${k}</span><span>${x}</span></div>`;
-  $("#v-live").innerHTML=kv("الإصدار المعلن",esc(v.latest_version_name||"—"))+kv("كود الإصدار",esc(v.latest_version_code??"—"))+kv("الحد الأدنى",esc(v.min_version_code??"—"))+
-    kv("فرض التحديث",v.is_force_update?`<span class="tag t-HIGH">مفعّل</span>`:`<span class="tag t-NORMAL">غير مفعّل</span>`)+
-    `<p class="muted" style="margin-top:12px">يُحدَّث المستند فور الحفظ، وتظهر شاشة القفل على الهواتف القديمة.</p>`;
+  const f = $("#audit-f").value;
+  const list = S.audit.filter(a => f === "ALL" || a.action === f || a.action_type === f);
+  const c = $("#audit-list");
+  if (!list.length) {
+    c.innerHTML = `<div class="empty">لا توجد سجلات مطابقة</div>`;
+    return;
+  }
+  c.innerHTML = `<table>
+    <thead><tr><th>الإجراء</th><th>التفاصيل</th><th>المسؤول</th><th>الوقت</th></tr></thead>
+    <tbody>${list.map(a => `
+      <tr>
+        <td><b>${esc(a.action || a.action_type || "")}</b></td>
+        <td>${esc(a.summary || a.details || "")}</td>
+        <td><span class="mono">${esc(a.by || a.performed_by_email || "النظام")}</span></td>
+        <td class="muted mono">${fmt(a.at || a.timestamp)}</td>
+      </tr>
+    `).join("")}</tbody>
+  </table>`;
 }
 
-/* الإجراءات */
-const logTo=(b,action,details,target)=>{ const d={action,details,target:target||null,by:S.me.email,byUid:S.me.uid,at:serverTimestamp()};
-  if(b) b.set(doc(collection(db,C.AUDIT)),d); else return addDoc(collection(db,C.AUDIT),d); };
-const can=async(section)=>{
-  if(S.me?.email?.toLowerCase()===ADMIN_EMAIL.toLowerCase()) return true;
-  try{ const p=await getDoc(doc(db,"admin_users",S.me.uid)); return p.exists() && p.data().active!==false && p.data().permissions?.[section]===true; }catch(e){ return false; }
-};
-const busy=async(btn,fn)=>{ btn&&(btn.disabled=true); try{ await fn(); }catch(e){ console.error(e); toast("تعذّر تنفيذ العملية. تحقق من الصلاحيات.",true); } btn&&(btn.disabled=false); };
-const addDays=n=>Timestamp.fromDate(new Date(Date.now()+n*864e5));
-const planKey = p => String(p.planType || p.plan_type || p.plan || "MONTHLY").toUpperCase();
-const planDays = p => { const d = Number(p.durationDays ?? p.duration_days); return d > 0 ? d : (planKey(p) === "ANNUAL" ? 365 : planKey(p) === "SEMI_ANNUAL" ? 180 : SUBSCRIPTION_DAYS); };
-const docsOf = u => { const e = (u.email || "").toLowerCase(); const l = (S.allUsers || []).filter(x => (x.email || "").toLowerCase() === e); return l.length ? l : [u]; };
-const isSusp = u => u.is_suspended === true || (u.subscriptionStatus || u.status) === "SUSPENDED";
-function dedupeUsers(list){ const m = new Map(); for (const u of list){ const k = (u.email || u.id).toLowerCase(); const cur = m.get(k); if (!cur || (u.uid && u.uid === u.id)) m.set(k, u); } return [...m.values()]; }
+/* 7. VERSION */
+function renderVersion(){
+  if (!S.ver) return;
+  const v = S.ver;
+  $("#v-name").value = v.latest_version_name || "";
+  $("#v-code").value = v.latest_version_code || "";
+  $("#v-min").value = v.min_version_code || "";
+  $("#v-apk").value = v.apk_url || "";
+  $("#v-notes").value = v.release_notes || "";
+  $("#v-force").checked = v.is_force_update === true;
+
+  $("#nav-ver").textContent = v.latest_version_name ? "v" + v.latest_version_name : "";
+
+  $("#v-live").innerHTML = `
+    <div style="display:grid;gap:8px">
+      <div><b>الإصدار الأخير:</b> ${esc(v.latest_version_name||"1.0.0")} (كود: ${esc(v.latest_version_code||"1")})</div>
+      <div><b>الحد الأدنى:</b> كود ${esc(v.min_version_code||"1")}</div>
+      <div><b>فرض التحديث:</b> ${v.is_force_update ? "مفعل 🔴" : "معطل 🟢"}</div>
+      <div><b>آخر تعديل:</b> ${fmt(v.updatedAt)} بواسطة ${esc(v.updatedBy||"")}</div>
+    </div>
+  `;
+}
+
+/* LOG HELPER */
+async function logTo(b, act, sum, targetEmail=""){
+  const payload = {
+    action: act,
+    action_type: act,
+    summary: sum,
+    details: sum,
+    by: S.me ? S.me.email : SUPER_ADMIN_EMAIL,
+    performed_by_email: S.me ? S.me.email : SUPER_ADMIN_EMAIL,
+    target_agent_email: targetEmail,
+    at: serverTimestamp(),
+    timestamp: serverTimestamp()
+  };
+  if (b) {
+    b.set(doc(collection(db, C.AUDIT)), payload);
+  } else {
+    await addDoc(collection(db, C.AUDIT), payload);
+  }
+}
+
+async function busy(btn, fn){
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.textContent = "جاري التنفيذ...";
+  try {
+    await fn();
+  } catch(e) {
+    console.error(e);
+    toast(e.message || "فشلت العملية", true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+}
+
+/* APPROVE & REJECT ACTIONS */
 async function approve(p){
-  const email = p.agentEmail || p.email || "الوكيل";
+  if (!can("approve_payments")) {
+    toast("غير مصرح لك بالموافقة على الطلبات", true);
+    return;
+  }
+  const email = p.agentEmail || p.email || "";
   const txId = p.transactionId || p.transaction_id || "";
-  const targetUid = p.agentUid || p.uid || p.id;
+  const plan = (p.plan_type || p.planType || "MONTHLY").toUpperCase();
+  const planLabel = plan === "ANNUAL" ? "السنوي" : plan === "SEMI_ANNUAL" ? "6 أشهر" : "الشهري";
+  const days = plan === "ANNUAL" ? 365 : plan === "SEMI_ANNUAL" ? 180 : 30;
 
-  if(!confirm(`تفعيل اشتراك ${email}؟\nرقم الحوالة: ${txId}`)) return;
+  if (!confirm(`هل أنت متأكد من تفعيل اشتراك (${email}) لباقة ${planLabel} لمدة ${days} يوماً؟`)) return;
 
-  const b=writeBatch(db);
+  const targetUid = p.agentUid || p.uid;
   const nowMs = Date.now();
-  const days = planDays(p);
-const expiryMs = nowMs + (days * 864e5);
+  const expiryMs = nowMs + (days * 864e5);
   const expiryTs = Timestamp.fromDate(new Date(expiryMs));
 
-  b.update(doc(db,C.PAY,p.id),{
-    status:"APPROVED",
-    approved_at:serverTimestamp(),
-    approved_by:S.me.email,
-    reviewedAt:serverTimestamp(),
-    reviewedBy:S.me.email
+  const b = writeBatch(db);
+  b.update(doc(db, C.PAY, p.id), {
+    status: "APPROVED",
+    approvedAt: serverTimestamp(),
+    approved_at: serverTimestamp(),
+    approvedBy: S.me.email,
+    approved_by: S.me.email,
+    plan_type: plan,
+    planType: plan,
+    duration_days: days,
+    durationDays: days
   });
 
-  if(targetUid){
-    b.set(doc(db,C.USERS,targetUid),{
-      subscriptionStatus:"ACTIVE",
-      status:"ACTIVE",
-      is_subscribed:true,
-      is_suspended:false,
-      subscriptionEndsAt:expiryTs,
-      subscription_expiry_timestamp:expiryTs,
-      subscriptionExpiryAt:expiryMs,
-      planType:planKey(p), plan_type:planKey(p), duration_days:days,
-      activated_at:serverTimestamp(),
-      activated_by:S.me.email
-    },{merge:true});
+  if (targetUid) {
+    const subPayload = {
+      subscriptionStatus: "ACTIVE",
+      status: "ACTIVE",
+      is_subscribed: true,
+      is_suspended: false,
+      subscriptionEndsAt: expiryTs,
+      subscription_expiry_timestamp: expiryTs,
+      subscriptionExpiryAt: expiryMs,
+      plan_type: plan,
+      planType: plan,
+      duration_days: days,
+      durationDays: days,
+      activated_at: serverTimestamp(),
+      activated_by: S.me.email
+    };
+    b.set(doc(db, C.USERS, targetUid), subPayload, { merge: true });
+    b.set(doc(db, "app_subscriptions", targetUid), subPayload, { merge: true });
   }
 
-  logTo(b,"SUBSCRIPTION_ACTIVATED",`تفعيل اشتراك ${email} (حوالة ${txId})`,email);
-  await b.commit(); toast("تم القبول وتفعيل الاشتراك");
+  logTo(b, "SUBSCRIPTION_ACTIVATED", `تفعيل باقة ${planLabel} (${days} يوم) لحساب ${email} (حوالة ${txId})`, email);
+  await b.commit();
+  toast(`تم تفعيل باقة ${planLabel} بنجاح (${days} يوماً)`);
 }
-async function reject(){
-  const p=S.pay.find(x=>x.id===S.rejectId); if(!p) return; const reason=$("#reject-reason").value.trim();
-  const email = p.agentEmail || p.email || "";
-  const b=writeBatch(db);
-  b.update(doc(db,C.PAY,p.id),{
-    status:"REJECTED",
-   rejectReason:reason, reject_reason:reason, rejected_at:serverTimestamp(), rejected_by:S.me.email,
-    reviewedAt:serverTimestamp(),
-    reviewedBy:S.me.email
-  });
-  logTo(b,"PAYMENT_REJECTED",`رفض طلب ${email}${reason?": "+reason:""}`,email);
-  await b.commit(); closeReject(); toast("تم رفض الطلب");
-}
-function closeReject(){ $("#reject-modal").classList.add("hidden"); S.rejectId=null; }
 
-document.addEventListener("click",e=>{
-  const btn=e.target.closest("[data-act]"); if(!btn) return; const {act,id}=btn.dataset;
-  const p=S.pay.find(x=>x.id===id), u=S.users.find(x=>x.id===id);
-  if(act==="approve"&&p) busy(btn,async()=>{if(await can("payments")) await approve(p); else toast("لا توجد صلاحية.",true);});
-  else if(act==="reject"&&p){ if(S.me?.email?.toLowerCase()!==ADMIN_EMAIL.toLowerCase()) { can("payments").then(ok=>{if(!ok) toast("لا توجد صلاحية.",true);}); return; } 
-    S.rejectId=id; 
+async function reject(){
+  if (!can("reject_payments")) {
+    toast("غير مصرح لك برفض الطلبات", true);
+    return;
+  }
+  const p = S.pay.find(x => x.id === S.rejectId);
+  if (!p) return;
+  const reason = $("#reject-reason").value.trim() || "رقم الحوالة غير مطابق أو لم يتم استلام المبلغ";
+  const email = p.agentEmail || p.email || "";
+
+  const b = writeBatch(db);
+  b.update(doc(db, C.PAY, p.id), {
+    status: "REJECTED",
+    rejectReason: reason,
+    reject_reason: reason,
+    reviewedAt: serverTimestamp(),
+    rejected_at: serverTimestamp(),
+    reviewedBy: S.me.email,
+    rejected_by: S.me.email
+  });
+  logTo(b, "PAYMENT_REJECTED", `رفض طلب تفعيل ${email}: ${reason}`, email);
+  await b.commit();
+  closeReject();
+  toast("تم رفض الطلب بنجاح");
+}
+function closeReject(){ $("#reject-modal").classList.add("hidden"); S.rejectId = null; }
+
+/* ADMIN USERS CREATION & EDITING */
+function openAddAdminModal(){
+  $("#admin-modal-title").textContent = "إضافة مستخدم إداري جديد";
+  $("#adm-id").value = "";
+  $("#adm-name").value = "";
+  $("#adm-email").value = "";
+  $("#adm-pass").value = "";
+  $("#adm-pass").required = true;
+  $("#adm-pass-group").classList.remove("hidden");
+  $("#adm-role").value = "مشرف إداري";
+
+  // Reset checkboxes
+  $$(".perm-grid input").forEach(i => i.checked = false);
+  $("#p-view_payments").checked = true;
+
+  $("#admin-modal").classList.remove("hidden");
+}
+
+function openEditAdminModal(a){
+  $("#admin-modal-title").textContent = `تعديل صلاحيات المشرف (${a.name || a.email})`;
+  $("#adm-id").value = a.id;
+  $("#adm-name").value = a.name || "";
+  $("#adm-email").value = a.email || "";
+  $("#adm-email").readOnly = true;
+  $("#adm-pass-group").classList.add("hidden");
+  $("#adm-pass").required = false;
+  $("#adm-role").value = a.role || "";
+
+  const perms = a.permissions || {};
+  Object.keys(PERM_LABELS).forEach(k => {
+    const el = $(`#p-${k}`);
+    if (el) el.checked = perms[k] === true;
+  });
+
+  $("#admin-modal").classList.remove("hidden");
+}
+
+function closeAdminModal(){
+  $("#admin-modal").classList.add("hidden");
+  $("#adm-email").readOnly = false;
+}
+
+$("#btn-add-admin").onclick = openAddAdminModal;
+$("#admin-modal-close").onclick = closeAdminModal;
+$("#adm-cancel").onclick = closeAdminModal;
+
+// Presets
+$$("[data-preset]").forEach(btn => {
+  btn.onclick = () => {
+    const p = btn.dataset.preset;
+    $$(".perm-grid input").forEach(i => i.checked = false);
+    if (p === "payments_only") {
+      $("#p-view_payments").checked = true;
+      $("#p-approve_payments").checked = true;
+      $("#p-reject_payments").checked = true;
+    } else if (p === "view_only") {
+      $("#p-view_payments").checked = true;
+      $("#p-view_reports").checked = true;
+    } else if (p === "agents_mgr") {
+      $("#p-manage_agents").checked = true;
+      $("#p-manage_subscribers").checked = true;
+      $("#p-manage_subscriptions").checked = true;
+      $("#p-view_reports").checked = true;
+    } else if (p === "full") {
+      $$(".perm-grid input").forEach(i => i.checked = true);
+    }
+  };
+});
+
+$("#admin-form").onsubmit = async e => {
+  e.preventDefault();
+  const btn = $("#adm-submit");
+  const editId = $("#adm-id").value;
+  const name = $("#adm-name").value.trim();
+  const email = $("#adm-email").value.trim().toLowerCase();
+  const pass = $("#adm-pass").value;
+  const role = $("#adm-role").value.trim() || "مشرف";
+
+  const perms = {};
+  Object.keys(PERM_LABELS).forEach(k => {
+    perms[k] = $(`#p-${k}`).checked;
+  });
+
+  btn.disabled = true;
+  btn.textContent = "جاري الحفظ...";
+
+  try {
+    if (!editId) {
+      // Create new Admin
+      if (pass.length < 6) {
+        toast("كلمة المرور يجب أن تكون 6 أحرف على الأقل", true);
+        btn.disabled = false;
+        btn.textContent = "حفظ المشرف";
+        return;
+      }
+
+      // Secondary App to create auth account without logging out current super admin
+      const secondaryAppName = "sec-auth-" + Date.now();
+      const secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
+      const secondaryAuth = getAuth(secondaryApp);
+
+      let createdUid = "";
+      try {
+        const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
+        createdUid = userCred.user.uid;
+      } catch (authErr) {
+        if (authErr.code === "auth/email-already-in-use") {
+          // If already in auth, use email as fallback doc ID
+          createdUid = "adm_" + email.replace(/[^a-zA-Z0-9]/g, "_");
+        } else {
+          throw authErr;
+        }
+      }
+
+      await setDoc(doc(db, C.ADMINS, createdUid), {
+        uid: createdUid,
+        email: email,
+        name: name,
+        role: role,
+        permissions: perms,
+        active: true,
+        createdAt: serverTimestamp(),
+        createdBy: S.me.email
+      });
+
+      await logTo(null, "ADMIN_CREATED", `إنشاء المشرف الإداري (${name} - ${email}) بصلاحيات مخصصة`);
+      toast(`تم إنشاء المشرف الإداري (${name}) بنجاح`);
+    } else {
+      // Update existing admin
+      await updateDoc(doc(db, C.ADMINS, editId), {
+        name: name,
+        role: role,
+        permissions: perms,
+        updatedAt: serverTimestamp(),
+        updatedBy: S.me.email
+      });
+
+      await logTo(null, "ADMIN_UPDATED", `تعديل صلاحيات المشرف (${name} - ${email})`);
+      toast("تم تحديث صلاحيات المشرف بنجاح");
+    }
+
+    closeAdminModal();
+  } catch (err) {
+    console.error("Admin save error:", err);
+    toast(err.message || "حدث خطأ أثناء حفظ المشرف", true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "حفظ المشرف";
+  }
+};
+
+/* EVENT DELEGATION */
+document.addEventListener("click", e => {
+  const btn = e.target.closest("[data-act]");
+  if (!btn) return;
+  const { act, id } = btn.dataset;
+  const p = S.pay.find(x => x.id === id);
+  const u = S.users.find(x => x.id === id);
+  const a = S.admins.find(x => x.id === id);
+
+  if (act === "approve" && p) busy(btn, () => approve(p));
+  else if (act === "reject" && p) {
+    if (!can("reject_payments")) { toast("غير مصرح لك برفض الطلبات", true); return; }
+    S.rejectId = id;
     const email = p.agentEmail || p.email || "";
     const txId = p.transactionId || p.transaction_id || "";
-    $("#reject-desc").textContent=`${email} · حوالة ${txId}`; 
-    $("#reject-reason").value=""; 
-    $("#reject-modal").classList.remove("hidden"); 
-    $("#reject-reason").focus(); 
+    $("#reject-desc").textContent = `${email} · حوالة ${txId}`;
+    $("#reject-reason").value = "";
+    $("#reject-modal").classList.remove("hidden");
+    $("#reject-reason").focus();
   }
-  else if(act==="receipt"&&p){ const url=p.receiptUrl||p.receiptImage; if(/^https:\/\//.test(url)){ $("#receipt-img").src=url; $("#receipt-modal").classList.remove("hidden"); } else toast("رابط الوصل غير صالح",true); }
-    else if(act==="extend"&&u) busy(btn,async()=>{ if(!(await can("agents"))){toast("لا توجد صلاحية.",true);return;}
-    if(!confirm(`تمديد اشتراك ${u.email} ${SUBSCRIPTION_DAYS} يوماً؟`)) return;
-    const cur=u.subscriptionEndsAt?.toDate?.(); const base=cur&&cur>new Date()?cur:new Date();
-    const ends=Timestamp.fromDate(new Date(base.getTime()+SUBSCRIPTION_DAYS*864e5));
-    const b=writeBatch(db);
-    docsOf(u).forEach(d=>b.set(doc(db,C.USERS,d.id),{subscriptionStatus:"ACTIVE",status:"ACTIVE",is_subscribed:true,is_suspended:false,subscriptionEndsAt:ends,subscription_expiry_timestamp:ends,subscriptionExpiryAt:ends.toMillis()},{merge:true}));
-    logTo(b,"PLAN_EXTENDED",`تمديد اشتراك ${u.email} ${SUBSCRIPTION_DAYS} يوماً`,u.email); await b.commit(); toast("تم التمديد"); });
-  else if(act==="suspend"&&u) busy(btn,async()=>{ if(!(await can("agents"))){toast("لا توجد صلاحية.",true);return;}
-    if(!confirm(`تجميد حساب ${u.email}؟`)) return;
-    const b=writeBatch(db);
-    docsOf(u).forEach(d=>b.set(doc(db,C.USERS,d.id),{subscriptionStatus:"SUSPENDED",status:"SUSPENDED",is_suspended:true,suspended_reason:"إجراء إداري",suspended_by:S.me.email,suspended_updated_at:serverTimestamp()},{merge:true}));
-    logTo(b,"ACCOUNT_SUSPENDED",`تجميد حساب ${u.email}`,u.email); await b.commit(); toast("تم التجميد"); });
-  else if(act==="unsuspend"&&u) busy(btn,async()=>{ if(!(await can("agents"))){toast("لا توجد صلاحية.",true);return;}
-    if(!confirm(`رفع التجميد عن ${u.email}؟`)) return;
-    const live=(u.subscriptionEndsAt?.toDate?.()||new Date(0))>new Date(); const st=live?"ACTIVE":"EXPIRED";
-    const b=writeBatch(db);
-    docsOf(u).forEach(d=>b.set(doc(db,C.USERS,d.id),{subscriptionStatus:st,status:st,is_subscribed:live,is_suspended:false,suspended_reason:"",suspended_updated_at:serverTimestamp()},{merge:true}));
-    logTo(b,"ACCOUNT_UNSUSPENDED",`رفع التجميد عن ${u.email}`,u.email); await b.commit(); toast("تم رفع التجميد"); });
-  else if(act==="toggle-bc"){ const x=S.bc.find(b=>b.id===id); if(x) busy(btn,()=>setDoc(doc(db,C.BC,id),{active:x.active===false},{merge:true})); }
-});
-$("#reject-ok").onclick=e=>busy(e.target,reject);
-$("#reject-cancel").onclick=closeReject;
-$("#receipt-close").onclick=()=>{ $("#receipt-modal").classList.add("hidden"); $("#receipt-img").removeAttribute("src"); };
-
-
-/* =========================
-   المظهر + اللغة + الإعدادات
-   ========================= */
-
-const STATIC_I18N = {
-"إدارة المنظومة":"NetFlow Administration","دخول الإدارة المركزية فقط":"Central administration login",
-"البريد الإلكتروني":"Email","كلمة المرور":"Password","تسجيل الدخول":"Sign in","نظرة عامة":"Overview",
-"طلبات التفعيل":"Activation requests","الوكلاء":"Agents","الإشعارات":"Broadcasts","سجل العمليات":"Audit log",
-"الإصدارات والتحديث":"Versions & updates","الإعدادات":"Settings","مدير النظام":"System administrator",
-"تسجيل الخروج":"Sign out","متصل":"Connected","طلبات بانتظار القرار":"Pending decisions","إجمالي الوكلاء":"Total agents",
-"اشتراكات فعّالة":"Active subscriptions","تعميمات مرسلة":"Broadcasts sent","طلبات تحتاج قراراً":"Requests needing review",
-"عرض الكل":"View all","آخر العمليات":"Recent operations","السجل الكامل":"Full log","بانتظار القرار":"Pending",
-"مقبولة":"Approved","مرفوضة":"Rejected","الكل":"All","بحث برقم الحوالة أو البريد":"Search by transaction or email",
-"بحث بالبريد الإلكتروني":"Search by email","التعميمات المرسلة":"Sent broadcasts","تعميم جديد":"New broadcast",
-"العنوان":"Title","الأولوية":"Priority","عادي":"Normal","عالي الأهمية / طوارئ":"High / emergency",
-"نص التعميم":"Broadcast message","إرسال لكل الهواتف":"Send to all phones","كل الإجراءات":"All actions",
-"تفعيل اشتراك":"Activate subscription","رفض طلب دفع":"Reject payment","تمديد اشتراك":"Extend subscription",
-"تجميد حساب":"Suspend account","رفع التجميد":"Unsuspend account","إرسال تعميم":"Send broadcast","تحديث الإصدار":"Update version",
-"إعدادات الإصدار":"Version settings","اسم الإصدار الأحدث":"Latest version name","كود الإصدار الأحدث":"Latest version code",
-"الحد الأدنى المسموح (كود)":"Minimum allowed code","رابط التحميل (APK أو المتجر)":"Download link (APK or store)",
-"ما الجديد في هذا الإصدار":"Release notes","فرض التحديث":"Force update","حفظ وتطبيق":"Save & apply",
-"الحالة الحالية":"Current status","الإصدار المعلن":"Published version","كود الإصدار":"Version code","الحد الأدنى":"Minimum code",
-"مفعّل":"Enabled","غير مفعّل":"Disabled","رفض الطلب":"Reject request","تأكيد الرفض":"Confirm rejection","إلغاء":"Cancel",
-"سبب الرفض (يظهر للوكيل)":"Rejection reason (shown to agent)","وصل الحوالة":"Payment receipt","إغلاق":"Close"
-};
-const _i18nOrig = new WeakMap();
-const translateStaticText=()=>{
-  const reverse=Object.fromEntries(Object.entries(STATIC_I18N).map(([a,e])=>[e,a]));
-  const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
-  const nodes=[]; while(walker.nextNode()) nodes.push(walker.currentNode);
-  nodes.forEach(n=>{
-    if(!n.parentElement || n.parentElement.closest("script,style")) return;
-    const v=n.nodeValue.trim(); if(!v) return;
-    const original=_i18nOrig.get(n) || (STATIC_I18N[v] ? v : reverse[v]);
-    if(!original) return;
-    _i18nOrig.set(n,original);
-    const translated=lang==="ar"?original:(STATIC_I18N[original]||original);
-    n.nodeValue=n.nodeValue.replace(v,translated);
-  });
-};
-const UI_LANG = {
-  ar:{
-    settings_title:"إعدادات النظام",theme_label:"المظهر",dark_mode:"الوضع الليلي",light_mode:"الوضع النهاري",
-    language_label:"اللغة",password_label:"تغيير كلمة مرور حسابك",change_password:"تغيير كلمة المرور",
-    admins_title:"مديرو النظام والمستخدمون الإداريون",admins_note:"يمكن للمدير الرئيسي إنشاء حسابات إدارية وتحديد صلاحيات كل حساب.",
-    display_name:"الاسم",username_label:"اسم المستخدم",email_label:"البريد الإلكتروني",password_create:"كلمة المرور",
-    permissions_label:"الصلاحيات",perm_overview:"نظرة عامة",perm_payments:"طلبات التفعيل",perm_agents:"الوكلاء",
-    perm_broadcast:"الإشعارات",perm_audit:"سجل العمليات",perm_version:"الإصدارات",perm_settings:"الإعدادات",
-    create_admin:"إنشاء المستخدم الإداري",admin_list_title:"الحسابات الإدارية",active:"فعّال",disabled:"موقوف",
-    no_admins:"لا توجد حسابات إدارية إضافية.",create_ok:"تم إنشاء المستخدم الإداري بنجاح.",
-    pass_ok:"تم تغيير كلمة المرور بنجاح.",pass_match:"كلمتا المرور غير متطابقتين.",
-    pass_short:"كلمة المرور يجب أن تكون 6 أحرف على الأقل.",recent_login:"لأسباب أمنية يجب تسجيل الدخول من جديد ثم إعادة المحاولة.",
-    required:"أكمل جميع حقول المستخدم الإداري.",email_exists:"هذا البريد مستخدم مسبقاً.",admin_only:"هذه العملية متاحة للمدير الرئيسي فقط.",
-    username_exists:"اسم المستخدم مستخدم مسبقاً.",permissions_required:"اختر صلاحية واحدة على الأقل.",
-    enabled:"تفعيل",disabled_action:"إيقاف",permissions:"الصلاحيات"
-  },
-  en:{
-    settings_title:"System Settings",theme_label:"Appearance",dark_mode:"Dark mode",light_mode:"Light mode",
-    language_label:"Language",password_label:"Change your password",change_password:"Change password",
-    admins_title:"System Administrators",admins_note:"The master administrator can create admin accounts and assign permissions.",
-    display_name:"Name",username_label:"Username",email_label:"Email",password_create:"Password",
-    permissions_label:"Permissions",perm_overview:"Overview",perm_payments:"Activation requests",perm_agents:"Agents",
-    perm_broadcast:"Broadcasts",perm_audit:"Audit log",perm_version:"Versions",perm_settings:"Settings",
-    create_admin:"Create admin user",admin_list_title:"Admin accounts",active:"Active",disabled:"Disabled",
-    no_admins:"No additional admin accounts.",create_ok:"Admin user created successfully.",
-    pass_ok:"Password changed successfully.",pass_match:"Passwords do not match.",
-    pass_short:"Password must be at least 6 characters.",recent_login:"For security, sign in again and retry.",
-    required:"Complete all admin user fields.",email_exists:"This email is already in use.",admin_only:"Only the master administrator can do this.",
-    username_exists:"This username is already in use.",permissions_required:"Select at least one permission.",
-    enabled:"Enable",disabled_action:"Disable",permissions:"Permissions"
-  }
-};
-let lang=localStorage.getItem("netflow_lang")||"ar";
-let theme=localStorage.getItem("netflow_theme")||"dark";
-
-const applyTheme=()=>{
-  document.body.classList.toggle("light",theme==="light");
-  $("#theme-toggle").textContent=theme==="light"?"☀️":"🌙";
-  $("#theme-dark")?.classList.toggle("primary",theme==="dark");
-  $("#theme-light")?.classList.toggle("primary",theme==="light");
-};
-const applyLanguage=()=>{
-  const d=UI_LANG[lang];
-  document.documentElement.lang=lang;
-  document.documentElement.dir=lang==="ar"?"rtl":"ltr";
-  $$("[data-t]").forEach(el=>{ const k=el.dataset.t; if(d[k]) el.textContent=d[k]; });
-  $("#lang-toggle").textContent=lang==="ar"?"EN":"عربي";
-  applyTheme();
-  translateStaticText();
-};
-const setTheme=v=>{theme=v;localStorage.setItem("netflow_theme",v);applyTheme();};
-const setLang=v=>{lang=v;localStorage.setItem("netflow_lang",v);applyLanguage();};
-
-$("#theme-toggle").onclick=()=>setTheme(theme==="dark"?"light":"dark");
-$("#theme-dark").onclick=()=>setTheme("dark");
-$("#theme-light").onclick=()=>setTheme("light");
-$("#lang-toggle").onclick=()=>setLang(lang==="ar"?"en":"ar");
-$("#lang-ar").onclick=()=>setLang("ar");
-$("#lang-en").onclick=()=>setLang("en");
-applyLanguage();
-
-async function loadAdminProfiles(){
-  const box=$("#admin-list"); if(!box) return;
-  try{
-    const snap=await getDocs(query(collection(db,"admin_users"),limit(100)));
-    if(snap.empty){box.innerHTML=`<div class="empty">${UI_LANG[lang].no_admins}</div>`;return;}
-    box.innerHTML=`<table><thead><tr><th>${UI_LANG[lang].display_name}</th><th>${UI_LANG[lang].username_label}</th><th>${UI_LANG[lang].email_label}</th><th>${UI_LANG[lang].permissions}</th><th>${UI_LANG[lang].active}</th></tr></thead><tbody>`+
-      snap.docs.map(d=>{
-        const x=d.data(), perms=Object.entries(x.permissions||{}).filter(([,v])=>v).map(([k])=>k).join(", ");
-        return `<tr><td>${esc(x.displayName||"—")}</td><td class="mono">${esc(x.username||"—")}</td><td>${esc(x.email||"—")}</td><td class="muted">${esc(perms||"—")}</td><td>${x.active===false?UI_LANG[lang].disabled:UI_LANG[lang].active}</td></tr>`;
-      }).join("")+"</tbody></table>";
-  }catch(e){console.error(e);box.innerHTML=`<div class="empty">${e.code==="permission-denied"?"لا توجد صلاحية لقراءة حسابات الإدارة.":"تعذر تحميل الحسابات."}</div>`;}
-}
-
-async function createAdminUser(){
-  if(S.me?.email?.toLowerCase()!==ADMIN_EMAIL.toLowerCase()){toast(UI_LANG[lang].admin_only,true);return;}
-  const name=$("#admin-name").value.trim(), username=$("#admin-username").value.trim().toLowerCase(),
-        email=$("#admin-email").value.trim().toLowerCase(), pass=$("#admin-pass").value;
-  const permissions={}; $$("[data-perm]").forEach(x=>permissions[x.dataset.perm]=x.checked);
-  if(!name||!username||!email||!pass){toast(UI_LANG[lang].required,true);return;}
-  if(pass.length<6){toast(UI_LANG[lang].pass_short,true);return;}
-  if(!Object.values(permissions).some(Boolean)){toast(UI_LANG[lang].permissions_required,true);return;}
-  const existing=await getDocs(query(collection(db,"admin_users"),limit(100)));
-  if(existing.docs.some(d=>(d.data().username||"").toLowerCase()===username)){toast(UI_LANG[lang].username_exists,true);return;}
-
-  const btn=$("#create-admin"); btn.disabled=true;
-  try{
-    // Secondary Firebase Auth instance keeps the current master session signed in.
-    const secondaryName="adminCreator";
-    let secondary;
-    try{ secondary=initializeApp(firebaseConfig,secondaryName); }catch(e){ secondary=getApp(secondaryName); }
-    const secondaryAuth=getAuth(secondary);
-    const cred=await createUserWithEmailAndPassword(secondaryAuth,email,pass);
-    await setDoc(doc(db,"admin_users",cred.user.uid),{
-      uid:cred.user.uid,email,username,displayName:name,active:true,role:"ADMIN",permissions,createdAt:serverTimestamp(),createdBy:S.me.email
-    });
-    await signOut(secondaryAuth);
-    toast(UI_LANG[lang].create_ok);
-    $("#admin-name").value=$("#admin-username").value=$("#admin-email").value=$("#admin-pass").value="";
-    loadAdminProfiles();
-  }catch(e){
-    console.error(e);
-    toast(e.code==="auth/email-already-in-use"?UI_LANG[lang].email_exists:(e.message||"تعذر إنشاء المستخدم"),true);
-  }finally{btn.disabled=false;}
-}
-
-$("#create-admin").onclick=()=>busy($("#create-admin"),createAdminUser);
-
-$("#change-pass").onclick=async e=>{
-  const p1=$("#new-pass").value,p2=$("#new-pass2").value;
-  if(p1.length<6){toast(UI_LANG[lang].pass_short,true);return;}
-  if(p1!==p2){toast(UI_LANG[lang].pass_match,true);return;}
-  await busy(e.target,async()=>{
-    try{
-      await updatePassword(auth.currentUser,p1);
-      $("#new-pass").value=$("#new-pass2").value="";
-      toast(UI_LANG[lang].pass_ok);
-    }catch(err){
-      console.error(err);
-      if(err.code==="auth/requires-recent-login"){toast(UI_LANG[lang].recent_login,true);}
-      else throw err;
+  else if (act === "receipt" && p) {
+    const url = p.receipt_url || p.receiptUrl || p.receiptImage;
+    if (url && (url.startsWith("https://") || url.startsWith("data:image/"))) {
+      $("#receipt-img").src = url;
+      $("#receipt-modal").classList.remove("hidden");
+    } else {
+      toast("صورة الوصل غير متوفرة أو رابط غير صالح", true);
     }
+  }
+  else if (act === "extend" && u) busy(btn, async () => {
+    if (!can("manage_subscriptions")) { toast("غير مصرح لك بتمديد الاشتراكات", true); return; }
+    if (!confirm(`تمديد اشتراك ${u.email} ${SUBSCRIPTION_DAYS} يوماً؟`)) return;
+    const base = u.subscriptionEndsAt?.toDate && u.subscriptionEndsAt.toDate() > new Date() ? u.subscriptionEndsAt.toDate() : new Date();
+    const b = writeBatch(db);
+    b.update(doc(db, C.USERS, u.id), {
+      subscriptionStatus: "ACTIVE",
+      subscriptionEndsAt: Timestamp.fromDate(new Date(base.getTime() + SUBSCRIPTION_DAYS * 864e5))
+    });
+    logTo(b, "PLAN_EXTENDED", `تمديد اشتراك ${u.email} ${SUBSCRIPTION_DAYS} يوماً`, u.email);
+    await b.commit();
+    toast("تم تمديد الاشتراك بنجاح");
   });
-};
-
-$("#bc-send").onclick=e=>busy(e.target,async()=>{
-  const title=$("#bc-title").value.trim(), body=$("#bc-body").value.trim();
-  if(!title||!body){ toast("اكتب العنوان والنص أولاً",true); return; }
-  await addDoc(collection(db,C.BC),{title,body,priority:$("#bc-pri").value,active:true,createdAt:serverTimestamp(),createdBy:S.me.email});
-  await logTo(null,"BROADCAST_SENT",`إرسال تعميم: ${title}`);
-  $("#bc-title").value=""; $("#bc-body").value=""; toast("تم إرسال التعميم");
+  else if (act === "suspend" && u) busy(btn, async () => {
+    if (!can("manage_agents")) { toast("غير مصرح لك بتجميد الحسابات", true); return; }
+    if (!confirm(`تجميد حساب ${u.email}؟`)) return;
+    const b = writeBatch(db);
+    b.update(doc(db, C.USERS, u.id), { subscriptionStatus: "SUSPENDED", is_suspended: true });
+    logTo(b, "ACCOUNT_SUSPENDED", `تجميد حساب ${u.email}`, u.email);
+    await b.commit();
+    toast("تم تجميد الحساب");
+  });
+  else if (act === "edit-admin" && a) {
+    openEditAdminModal(a);
+  }
+  else if (act === "toggle-admin" && a) busy(btn, async () => {
+    const nextActive = a.active === false;
+    await updateDoc(doc(db, C.ADMINS, id), { active: nextActive, updatedBy: S.me.email });
+    await logTo(null, "ADMIN_UPDATED", `${nextActive ? "تفعيل" : "تعطيل"} حساب المشرف (${a.name || a.email})`);
+    toast(`تم ${nextActive ? "تفعيل" : "تعطيل"} المشرف`);
+  });
+  else if (act === "delete-admin" && a) busy(btn, async () => {
+    if (!confirm(`هل أنت متأكد من حذف المشرف الإداري (${a.name || a.email}) نهائياً؟`)) return;
+    await deleteDoc(doc(db, C.ADMINS, id));
+    await logTo(null, "ADMIN_DELETED", `حذف المشرف الإداري (${a.name || a.email})`);
+    toast("تم حذف المشرف بنجاح");
+  });
+  else if (act === "toggle-bc") {
+    const x = S.bc.find(b => b.id === id);
+    if (x) busy(btn, () => setDoc(doc(db, C.BC, id), { active: x.active === false }, { merge: true }));
+  }
 });
 
-$("#v-save").onclick=e=>busy(e.target,async()=>{
-  const code=parseInt($("#v-code").value,10), min=parseInt($("#v-min").value,10), name=$("#v-name").value.trim(), apk=$("#v-apk").value.trim();
-  if(!name||!(code>0)||!(min>0)){ toast("أكمل اسم الإصدار وكوده والحد الأدنى",true); return; }
-  if(min>code){ toast("الحد الأدنى لا يجوز أن يكون أكبر من كود الإصدار الأحدث",true); return; }
-  if(apk&&!/^https:\/\//.test(apk)){ toast("رابط التحميل يجب أن يبدأ بـ https",true); return; }
-  const force=$("#v-force").checked;
-  if(force&&!confirm("فرض التحديث سيقفل كل الهواتف التي كودها أقل من الحد الأدنى. متابعة؟")) return;
-  await setDoc(doc(db,...VER),{latest_version_name:name,latest_version_code:code,min_version_code:min,apk_url:apk,release_notes:$("#v-notes").value.trim(),is_force_update:force,updatedAt:serverTimestamp(),updatedBy:S.me.email},{merge:true});
-  await logTo(null,"VERSION_UPDATED",`إصدار ${name} (كود ${code}، الحد الأدنى ${min}${force?"، فرض التحديث":""})`);
-  toast("تم حفظ إعدادات الإصدار");
+$("#reject-ok").onclick = e => busy(e.target, reject);
+$("#reject-cancel").onclick = closeReject;
+$("#receipt-close").onclick = () => { $("#receipt-modal").classList.add("hidden"); $("#receipt-img").removeAttribute("src"); };
+
+$("#bc-send").onclick = e => busy(e.target, async () => {
+  if (!can("manage_settings")) { toast("غير مصرح لك بإرسال التعميمات", true); return; }
+  const title = $("#bc-title").value.trim(), body = $("#bc-body").value.trim();
+  if (!title || !body) { toast("اكتب العنوان والنص أولاً", true); return; }
+  await addDoc(collection(db, C.BC), {
+    title,
+    body,
+    priority: $("#bc-pri").value,
+    active: true,
+    createdAt: serverTimestamp(),
+    createdBy: S.me.email
+  });
+  await logTo(null, "BROADCAST_SENT", `إرسال تعميم: ${title}`);
+  $("#bc-title").value = "";
+  $("#bc-body").value = "";
+  toast("تم إرسال التعميم بنجاح");
+});
+
+$("#v-save").onclick = e => busy(e.target, async () => {
+  if (!can("manage_settings")) { toast("غير مصرح لك بإدارة الإصدارات", true); return; }
+  const code = parseInt($("#v-code").value, 10), min = parseInt($("#v-min").value, 10), name = $("#v-name").value.trim(), apk = $("#v-apk").value.trim();
+  if (!name || !(code > 0) || !(min > 0)) { toast("أكمل اسم الإصدار وكوده والحد الأدنى", true); return; }
+  if (min > code) { toast("الحد الأدنى لا يجوز أن يكون أكبر من كود الإصدار الأحدث", true); return; }
+  if (apk && !/^https:\/\//.test(apk)) { toast("رابط التحميل يجب أن يبدأ بـ https", true); return; }
+  const force = $("#v-force").checked;
+  if (force && !confirm("فرض التحديث سيقفل كل الهواتف التي كودها أقل من الحد الأدنى. متابعة؟")) return;
+  await setDoc(doc(db, ...VER), {
+    latest_version_name: name,
+    latest_version_code: code,
+    min_version_code: min,
+    apk_url: apk,
+    release_notes: $("#v-notes").value.trim(),
+    is_force_update: force,
+    updatedAt: serverTimestamp(),
+    updatedBy: S.me.email
+  }, { merge: true });
+  await logTo(null, "VERSION_UPDATED", `إصدار ${name} (كود ${code}، الحد الأدنى ${min}${force ? "، فرض التحديث" : ""})`);
+  toast("تم حفظ إعدادات الإصدار بنجاح");
 });
 </script>
-     <script type="module" src="extras.js"></script>
 </body>
 </html>
