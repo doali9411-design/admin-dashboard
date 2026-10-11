@@ -1,0 +1,59 @@
+/* NetFlow theme layer: يوضع بعد الـ <style> الأصلي ويتجاوزه بدون لمس منطق Firebase */
+:root{--r:16px;--glow:0 10px 30px rgba(0,0,0,.35)}
+html[data-theme=dark]{--bg:#060a14;--panel:rgba(18,26,46,.74);--panel2:rgba(30,41,70,.72);--line:rgba(120,150,210,.18);--text:#eef3ff;--muted:#93a1c1;--accent:#22e5d3;--accent2:#8b5cf6;--ink:#04201c}
+html[data-theme=light]{--bg:#e8f1fb;--panel:rgba(255,255,255,.86);--panel2:#eef4fc;--line:#d6e2f2;--text:#10213f;--muted:#5f7194;--accent:#1d8cf8;--accent2:#6366f1;--ink:#fff;--ok:#12a46a;--warn:#f59e0b;--bad:#e5484d;--glow:0 8px 28px rgba(30,100,200,.12)}
+body{transition:background .25s,color .25s}
+html[data-theme=dark] body{background:radial-gradient(900px 500px at 85% -10%,rgba(139,92,246,.22),transparent),radial-gradient(800px 500px at 10% 110%,rgba(34,229,211,.14),transparent),var(--bg)}
+html[data-theme=light] body{background:radial-gradient(900px 500px at 80% -10%,#bfe0ff,transparent),radial-gradient(700px 400px at 0 100%,#d9ecff,transparent),var(--bg)}
+.card,aside,.login-box,.modal .box{backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:var(--glow)}
+.card{border-radius:var(--r)}
+header.top h2{font-size:32px;font-weight:800}
+
+/* القائمة الجانبية */
+.nav{justify-content:flex-start;gap:12px;padding:12px 14px;border-radius:12px;font-size:14.5px}
+.nav::before{width:26px;font-size:18px;text-align:center}
+.nav[data-view=overview]::before{content:"📊"}.nav[data-view=payments]::before{content:"💳"}.nav[data-view=agents]::before{content:"👥"}
+.nav[data-view=admins]::before{content:"🛡️"}.nav[data-view=broadcast]::before{content:"🔔"}.nav[data-view=audit]::before{content:"🕘"}.nav[data-view=version]::before{content:"🚀"}
+.nav .badge-n,.nav #nav-ver{margin-inline-start:auto}
+.nav.active{background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;box-shadow:0 8px 20px rgba(60,120,240,.35)}
+
+/* بطاقات الأرقام */
+.stats{gap:16px}
+.stats .stat{position:relative;overflow:hidden;padding:20px 22px;min-height:130px}
+.stat span{font-size:14px}
+.stat b{font-size:38px;margin-top:6px;letter-spacing:-.5px}
+.stat::after{position:absolute;inset-inline-end:16px;bottom:10px;font-size:46px;filter:drop-shadow(0 8px 10px rgba(0,0,0,.25))}
+.stats .stat:nth-child(1)::after{content:"⚠️"}.stats .stat:nth-child(2)::after{content:"👥"}
+.stats .stat:nth-child(3)::after{content:"✅"}.stats .stat:nth-child(4)::after{content:"💰"}
+.stats .stat:nth-child(4) b{color:var(--accent)}
+.stat.warn{border-color:rgba(245,158,11,.55)}
+
+/* الجداول والأزرار والحقول */
+th{font-size:13px}
+td{padding:14px 10px}
+tr:hover td{background:rgba(127,150,200,.07)}
+.btn{border-radius:10px;transition:transform .15s,border-color .15s}
+.btn:hover{transform:translateY(-1px)}
+html[data-theme=dark] .btn.primary{background:linear-gradient(135deg,#22e5d3,#38bdf8);color:#04201c;border:0;box-shadow:0 0 24px rgba(34,229,211,.3)}
+html[data-theme=light] .btn.primary{background:linear-gradient(135deg,#38a8ff,#1d6ff2);color:#fff;border:0;box-shadow:0 6px 16px rgba(29,111,242,.3)}
+.btn.ok{background:#12a46a;border-color:#12a46a;color:#fff}
+.btn.bad{background:#dc3c46;border-color:#dc3c46;color:#fff}
+input,textarea,select{border-radius:12px;background:var(--panel2)}
+html[data-theme=light] input,html[data-theme=light] textarea,html[data-theme=light] select{background:#fff}
+input:focus,textarea:focus,select:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+.modal{backdrop-filter:blur(4px)}
+#toast{background:var(--panel);color:var(--text)}
+
+/* شاشة الدخول: بطاقة زجاجية + صورة */
+#login{grid-template-columns:1fr minmax(340px,440px);gap:6vw;align-items:center;justify-items:stretch;padding:6vh 6vw}
+#login::before{content:"";align-self:stretch;min-height:72vh;border-radius:28px;background:url(hero.jpg) center/cover,linear-gradient(135deg,#0b1b4a,#6d28d9);box-shadow:0 0 80px rgba(80,120,255,.25)}
+.login-box{max-width:none;padding:40px;border-radius:24px;box-shadow:0 0 0 1px rgba(34,229,211,.25),0 0 60px rgba(34,229,211,.15)}
+.login-box .brand{font-size:24px}
+@media(max-width:900px){#login{grid-template-columns:1fr}#login::before{display:none}}
+
+/* أزرار المظهر واللغة */
+#ctl{display:flex;gap:10px;align-items:center;z-index:50}
+#ctl.float{position:fixed;top:16px;inset-inline-end:20px}
+.seg{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:3px}
+.seg button{border:0;background:none;border-radius:99px;padding:5px 12px;cursor:pointer;color:var(--muted);font:inherit;font-size:13px}
+.seg button.on{background:var(--accent);color:var(--ink);font-weight:700}
