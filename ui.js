@@ -5,7 +5,6 @@ const get=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
 const put=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
 
 const EN={
-  "نوع الحساب":"Account type","المتبقي":"Remaining","ينتهي في":"Ends on","آخر دخول":"Last login","تجريبي":"Trial","مشترك":"Subscriber","اشتراك منتهي":"Subscription ended","انتهت التجربة":"Trial ended",
 "لوحة الإدارة المركزية":"Central Control Panel","تسجيل دخول المشرفين والمدراء":"Admin & manager sign-in",
 "الدخول المباشر بحساب Google":"Continue with Google","أو بالبريد وكلمة المرور":"or with email & password",
 "البريد الإلكتروني":"Email","كلمة المرور":"Password","دخول المشرف":"Sign in",
@@ -47,8 +46,7 @@ const EN={
 "تم رفض الطلب بنجاح":"Request rejected","تم إرسال التعميم بنجاح":"Broadcast sent","جاري التنفيذ...":"Working..."
 };
 const RULES=[[/^([\d,.٠-٩٬]+) د\.ع$/,"$1 IQD"],[/^(\d+) مشرف مسجل$/,"$1 admins registered"],[/^(\d+) مشرف$/,"$1 admins"]];
-[/^(≈ )?(\d+) يوم$/,"$1$2 days"],
-  const tr=s=>{const t=s.trim();if(EN[t])return EN[t];for(const [r,x] of RULES)if(r.test(t))return t.replace(r,x);return null;};
+const tr=s=>{const t=s.trim();if(EN[t])return EN[t];for(const [r,x] of RULES)if(r.test(t))return t.replace(r,x);return null;};
 
 let theme=get("nf-theme")||"auto",lang=get("nf-lang")||"ar";
 const mq=matchMedia("(prefers-color-scheme: dark)");
@@ -91,6 +89,7 @@ function applyLang(){
   d.lang=lang;d.dir=lang==="ar"?"rtl":"ltr";
   document.title=lang==="ar"?"NetFlow Control Hub | إدارة المنظومة":"NetFlow Control Hub | System Management";
   obs.disconnect();walk(document.body);attrs();
+  labelTables();
   obs.observe(document.body,{childList:true,subtree:true,characterData:true});
   document.querySelectorAll("#seg-lang button").forEach(b=>b.classList.toggle("on",b.dataset.l===lang));
 }
@@ -117,5 +116,28 @@ function place(){
 }
 if($("#app"))new MutationObserver(place).observe($("#app"),{attributes:true,attributeFilter:["class"]});
 
-applyTheme();applyLang();place();
+/* قائمة الجوال (☰) */
+const bd=document.createElement("div");bd.id="nav-backdrop";document.body.appendChild(bd);
+const tg=document.createElement("button");tg.id="nav-toggle";tg.type="button";tg.setAttribute("aria-label","Menu");tg.textContent="☰";
+const closeNav=()=>document.body.classList.remove("nav-open");
+tg.onclick=()=>document.body.classList.toggle("nav-open");
+bd.onclick=closeNav;
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeNav();});
+document.addEventListener("click",e=>{if(e.target.closest("aside .nav"))closeNav();});
+const hd=$("header.top");if(hd)hd.prepend(tg);
+
+/* عناوين الأعمدة لبطاقات الجوال */
+function labelTables(){
+  document.querySelectorAll("table").forEach(t=>{
+    const hs=[...t.querySelectorAll("thead th")].map(h=>h.textContent.trim());
+    t.querySelectorAll("tbody tr").forEach(r=>[...r.children].forEach((td,i)=>{if(hs[i])td.dataset.label=hs[i];}));
+  });
+}
+let lt=0;
+new MutationObserver(ms=>{
+  if(!ms.some(m=>m.target.id!=="clock"&&m.target.id!=="toast"&&m.target.id!=="live"))return;
+  cancelAnimationFrame(lt);lt=requestAnimationFrame(labelTables);
+}).observe(document.body,{childList:true,subtree:true});
+
+applyTheme();applyLang();place();labelTables();
 })();
