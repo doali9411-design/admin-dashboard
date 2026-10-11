@@ -831,24 +831,50 @@ function renderPayments(){
 }
 
 /* 3. AGENTS */
+const TRIAL_DAYS = 14;   // غيّرها إلى مدة التجربة الفعلية في تطبيقك
+const DAY_MS = 864e5;
+const msOf = v => v?.toMillis ? v.toMillis() : (typeof v === "number" ? v : 0);
+const fmtMs = ms => ms ? new Date(ms).toLocaleDateString("ar-IQ", { dateStyle: "medium" }) : "—";
+
+function accountInfo(u){
+  const now = Date.now();
+  const subEnd = msOf(u.subscriptionEndsAt) || msOf(u.subscription_expiry_timestamp) || msOf(u.subscriptionExpiryAt);
+  const created = msOf(u.createdAt) || msOf(u.created_at);
+  const realTrial = msOf(u.trialEndsAt);
+  const trialEnd = realTrial || (created ? created + TRIAL_DAYS * DAY_MS : 0);
+  const est = !realTrial;
+  const wasPaid = u.subscriptionType === "PAID" || !!(u.plan_type || u.planType) || subEnd > 0;
+  const left = t => Math.max(0, Math.ceil((t - now) / DAY_MS));
+  if (u.subscriptionStatus === "SUSPENDED" || u.is_suspended === true) return { kind: "SUSPENDED", end: subEnd || trialEnd, left: 0 };
+  if (subEnd > now) return { kind: "PAID", end: subEnd, left: left(subEnd) };
+  if (wasPaid) return { kind: "PAID_EXPIRED", end: subEnd, left: 0 };
+  if (trialEnd > now) return { kind: "TRIAL", end: trialEnd, left: left(trialEnd), est };
+  return { kind: "TRIAL_ENDED", end: trialEnd, left: 0, est };
+}
+const KIND = {
+  PAID: ["ACTIVE", "مشترك"], TRIAL: ["ADMIN", "تجريبي"], SUSPENDED: ["SUSPENDED", "مجمّد"],
+  PAID_EXPIRED: ["EXPIRED", "اشتراك منتهي"], TRIAL_ENDED: ["EXPIRED", "انتهت التجربة"]
+};
+const leftColor = d => d <= 3 ? "var(--bad)" : d <= 7 ? "var(--warn)" : "var(--ok)";
+
 function renderAgents(){
   const q = ($("#agent-q").value || "").trim().toLowerCase();
-  const list = S.users.filter(u => {
-    if (!q) return true;
-    return (u.email || "").toLowerCase().includes(q) || (u.name || u.fullName || "").toLowerCase().includes(q);
-  });
-
+  const list = S.users.filter(u => !q || (u.email || "").toLowerCase().includes(q) || (u.name || u.fullName || "").toLowerCase().includes(q));
   const c = $("#agent-list");
   if (!list.length) { c.innerHTML = `<div class="empty">لا يوجد وكلاء مطابقون</div>`; return; }
 
   c.innerHTML = `<table>
-    <thead><tr><th>الوكيل</th><th>حالة الحساب</th><th>انتهاء الاشتراك</th><th>تاريخ التسجيل</th><th>الإجراءات</th></tr></thead>
+    <thead><tr><th>الوكيل</th><th>نوع الحساب</th><th>المتبقي</th><th>ينتهي في</th><th>آخر دخول</th><th>الإجراءات</th></tr></thead>
     <tbody>${list.map(u => {
       const email = u.email || "";
       const name = u.name || u.fullName || "وكيل";
-      const st = u.subscriptionStatus || (u.is_subscribed ? "ACTIVE" : "EXPIRED");
-      const isSusp = st === "SUSPENDED" || u.is_suspended === true;
-      const ends = u.subscriptionEndsAt || u.subscription_expiry_timestamp || u.subscriptionExpiryAt;
+      const info = accountInfo(u);
+      const [cls, label] = KIND[info.kind];
+      const active = info.kind === "PAID" || info.kind === "TRIAL";
+      const remain = active
+        ? `<b style="color:${leftColor(info.left)}">${info.est ? "≈ " : ""}${info.left} يوم</b>`
+        : `<span class="muted">—</span>`;
+      const isSusp = info.kind === "SUSPENDED";
       const isMe = S.me && email.toLowerCase() === (S.me.email || "").toLowerCase();
 
       const editBtn = can("manage_agents") ? `<button class="btn sm" data-act="edit-agent" data-id="${esc(u.id)}">✏️ تعديل</button>` : "";
@@ -860,15 +886,15 @@ function renderAgents(){
 
       return `<tr>
         <td><b>${esc(name)}</b><div class="muted">${esc(email)}</div></td>
-        <td>${tag(isSusp ? "SUSPENDED" : st)}</td>
-        <td class="mono">${fmtD(ends)}</td>
-        <td class="muted">${fmtD(u.createdAt || u.created_at)}</td>
+        <td><span class="tag t-${cls}">${label}</span></td>
+        <td>${remain}</td>
+        <td class="mono">${info.est && info.kind.startsWith("TRIAL") ? "≈ " : ""}${fmtMs(info.end)}</td>
+        <td class="muted">${fmt(u.lastLoginAt)}</td>
         <td><div class="row-actions">${editBtn}${extendBtn}${suspendBtn}${delBtn}</div></td>
       </tr>`;
     }).join("")}</tbody>
   </table>`;
 }
-
 /* 4. ADMINS & PERMISSIONS (إدارة المشرفين والصلاحيات) */
 function renderAdmins(){
   const q = ($("#admin-q").value || "").trim().toLowerCase();
