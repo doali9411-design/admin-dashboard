@@ -5,6 +5,7 @@ const get=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
 const put=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
 
 const EN={
+  "نوع الحساب":"Account type","المتبقي":"Remaining","ينتهي في":"Ends on","آخر دخول":"Last login","تجريبي":"Trial","مشترك":"Subscriber","اشتراك منتهي":"Subscription ended","انتهت التجربة":"Trial ended",
 "لوحة الإدارة المركزية":"Central Control Panel","تسجيل دخول المشرفين والمدراء":"Admin & manager sign-in",
 "الدخول المباشر بحساب Google":"Continue with Google","أو بالبريد وكلمة المرور":"or with email & password",
 "البريد الإلكتروني":"Email","كلمة المرور":"Password","دخول المشرف":"Sign in",
@@ -46,6 +47,7 @@ const EN={
 "تم رفض الطلب بنجاح":"Request rejected","تم إرسال التعميم بنجاح":"Broadcast sent","جاري التنفيذ...":"Working..."
 };
 const RULES=[[/^([\d,.٠-٩٬]+) د\.ع$/,"$1 IQD"],[/^(\d+) مشرف مسجل$/,"$1 admins registered"],[/^(\d+) مشرف$/,"$1 admins"]];
+  "نوع الحساب":"Account type","المتبقي":"Remaining","ينتهي في":"Ends on","آخر دخول":"Last login","تجريبي":"Trial","مشترك":"Subscriber","اشتراك منتهي":"Subscription ended","انتهت التجربة":"Trial ended",
 const tr=s=>{const t=s.trim();if(EN[t])return EN[t];for(const [r,x] of RULES)if(r.test(t))return t.replace(r,x);return null;};
 
 let theme=get("nf-theme")||"auto",lang=get("nf-lang")||"ar";
