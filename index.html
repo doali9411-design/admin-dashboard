@@ -814,16 +814,11 @@ function renderAgents(){
   const q = ($("#agent-q").value || "").trim().toLowerCase();
   const list = S.users.filter(u => {
     if (!q) return true;
-    const email = (u.email || "").toLowerCase();
-    const name = (u.name || u.fullName || "").toLowerCase();
-    return email.includes(q) || name.includes(q);
+    return (u.email || "").toLowerCase().includes(q) || (u.name || u.fullName || "").toLowerCase().includes(q);
   });
 
   const c = $("#agent-list");
-  if (!list.length) {
-    c.innerHTML = `<div class="empty">لا يوجد وكلاء مطابقون</div>`;
-    return;
-  }
+  if (!list.length) { c.innerHTML = `<div class="empty">لا يوجد وكلاء مطابقون</div>`; return; }
 
   c.innerHTML = `<table>
     <thead><tr><th>الوكيل</th><th>حالة الحساب</th><th>انتهاء الاشتراك</th><th>تاريخ التسجيل</th><th>الإجراءات</th></tr></thead>
@@ -831,17 +826,23 @@ function renderAgents(){
       const email = u.email || "";
       const name = u.name || u.fullName || "وكيل";
       const st = u.subscriptionStatus || (u.is_subscribed ? "ACTIVE" : "EXPIRED");
+      const isSusp = st === "SUSPENDED" || u.is_suspended === true;
       const ends = u.subscriptionEndsAt || u.subscription_expiry_timestamp || u.subscriptionExpiryAt;
+      const isMe = S.me && email.toLowerCase() === (S.me.email || "").toLowerCase();
 
-      const extendBtn = can("manage_subscriptions") ? `<button class="btn sm ok" data-act="extend" data-id="${u.id}">تمديد 30 يوماً</button>` : '';
-      const suspendBtn = can("manage_agents") ? `<button class="btn sm bad" data-act="suspend" data-id="${u.id}">تجميد الحساب</button>` : '';
+      const editBtn = can("manage_agents") ? `<button class="btn sm" data-act="edit-agent" data-id="${esc(u.id)}">✏️ تعديل</button>` : "";
+      const extendBtn = can("manage_subscriptions") ? `<button class="btn sm ok" data-act="extend" data-id="${esc(u.id)}">تمديد 30 يوماً</button>` : "";
+      const suspendBtn = !can("manage_agents") ? "" : (isSusp
+        ? `<button class="btn sm ok" data-act="unsuspend" data-id="${esc(u.id)}">رفع التجميد</button>`
+        : `<button class="btn sm bad" data-act="suspend" data-id="${esc(u.id)}">تجميد</button>`);
+      const delBtn = (S.isSuper && !isMe) ? `<button class="btn sm bad" data-act="delete-agent" data-id="${esc(u.id)}">🗑️ حذف</button>` : "";
 
       return `<tr>
         <td><b>${esc(name)}</b><div class="muted">${esc(email)}</div></td>
-        <td>${tag(st)}</td>
+        <td>${tag(isSusp ? "SUSPENDED" : st)}</td>
         <td class="mono">${fmtD(ends)}</td>
         <td class="muted">${fmtD(u.createdAt || u.created_at)}</td>
-        <td><div class="row-actions">${extendBtn}${suspendBtn}</div></td>
+        <td><div class="row-actions">${editBtn}${extendBtn}${suspendBtn}${delBtn}</div></td>
       </tr>`;
     }).join("")}</tbody>
   </table>`;
