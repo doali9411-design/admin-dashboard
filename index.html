@@ -1194,12 +1194,17 @@ $("#admin-form").onsubmit = async e => {
       try {
         const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
         createdUid = userCred.user.uid;
-      } catch (authErr) {
-        if (authErr.code === "auth/email-already-in-use") {
-          // If already in auth, use email as fallback doc ID
-          createdUid = "adm_" + email.replace(/[^a-zA-Z0-9]/g, "_");
-        } else {
-          throw authErr;
+    } catch (authErr) {
+  if (authErr.code === "auth/email-already-in-use") {
+    // الحساب موجود: ندخل به على التطبيق الثانوي لنأخذ الـ uid الحقيقي
+    try {
+      const cred = await signInWithEmailAndPassword(secondaryAuth, email, pass);
+      createdUid = cred.user.uid;
+    } catch (e) {
+      throw new Error("هذا البريد مسجل مسبقاً بكلمة مرور مختلفة. استخدم كلمة المرور السابقة أو احذف المستخدم من Firebase Authentication ثم أعد المحاولة.");
+    }
+  } else { throw authErr; }
+}
         }
       }
 
