@@ -1189,25 +1189,22 @@ $("#admin-form").onsubmit = async e => {
       const secondaryAppName = "sec-auth-" + Date.now();
       const secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
       const secondaryAuth = getAuth(secondaryApp);
-
-      let createdUid = "";
-      try {
-        const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
-        createdUid = userCred.user.uid;
-    } catch (authErr) {
+let createdUid = "";
+try {
+  const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
+  createdUid = userCred.user.uid;
+} catch (authErr) {
   if (authErr.code === "auth/email-already-in-use") {
-    // الحساب موجود: ندخل به على التطبيق الثانوي لنأخذ الـ uid الحقيقي
     try {
       const cred = await signInWithEmailAndPassword(secondaryAuth, email, pass);
       createdUid = cred.user.uid;
-    } catch (e) {
-      throw new Error("هذا البريد مسجل مسبقاً بكلمة مرور مختلفة. استخدم كلمة المرور السابقة أو احذف المستخدم من Firebase Authentication ثم أعد المحاولة.");
+    } catch (e2) {
+      throw new Error("هذا البريد مسجل مسبقاً بكلمة مرور مختلفة. احذف المستخدم من Firebase Authentication ثم أعد المحاولة.");
     }
-  } else { throw authErr; }
+  } else {
+    throw authErr;
+  }
 }
-        }
-      }
-
       await setDoc(doc(db, C.ADMINS, createdUid), {
         uid: createdUid,
         email: email,
