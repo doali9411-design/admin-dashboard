@@ -57,3 +57,50 @@ input:focus,textarea:focus,select:focus{outline:0;border-color:var(--accent);box
 .seg{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:3px}
 .seg button{border:0;background:none;border-radius:99px;padding:5px 12px;cursor:pointer;color:var(--muted);font:inherit;font-size:13px}
 .seg button.on{background:var(--accent);color:var(--ink);font-weight:700}
+
+/* ===== الجوال والتابلت ===== */
+#nav-toggle,#nav-backdrop{display:none}
+@media(max-width:900px){
+  html,body{overflow-x:hidden}
+  #app{display:block}
+  /* القائمة الجانبية تصير درجاً يُفتح بزر ☰ */
+  #app aside{position:fixed;top:0;bottom:0;inset-inline-start:0;width:min(82vw,300px);height:100dvh;z-index:60;transition:transform .25s}
+  html[dir=rtl] #app aside{transform:translateX(100%)}
+  html[dir=ltr] #app aside{transform:translateX(-100%)}
+  body.nav-open #app aside{transform:none}
+  body.nav-open #nav-backdrop{display:block;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:55}
+  #nav-toggle{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--panel);border:1px solid var(--line);color:var(--text);font-size:20px;cursor:pointer}
+  main{padding:14px 14px calc(28px + env(safe-area-inset-bottom));max-width:100%}
+  header.top{align-items:center;gap:12px;margin-bottom:14px}
+  header.top h2{font-size:22px}
+  header.top p{font-size:13px}
+  header.top .status{width:100%;flex-wrap:wrap;gap:10px;justify-content:space-between}
+  #clock{display:none}
+  .stats{grid-template-columns:repeat(2,1fr);gap:10px}
+  .stats .stat{padding:14px;min-height:100px}
+  .stat b{font-size:26px}
+  .stat::after{font-size:28px;inset-inline-end:10px;bottom:6px}
+  .grid2,.f2,.perm-grid{grid-template-columns:1fr}
+  .bar{flex-direction:column;align-items:stretch}
+  .bar input,.bar select{max-width:100%}
+  .tabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
+  .tabs .btn{white-space:nowrap}
+  input,select,textarea{font-size:16px}
+  .btn{min-height:40px}
+  .btn.sm{min-height:36px;padding:6px 12px}
+  .modal{align-items:end;padding:0}
+  .modal .box{max-width:100%!important;border-radius:20px 20px 0 0;max-height:92dvh}
+  #toast{left:12px;right:12px;bottom:16px;text-align:center}
+  #login{padding:70px 18px 24px}
+  .login-box{padding:26px 20px}
+}
+/* الجداول تتحول إلى بطاقات على شاشة الهاتف */
+@media(max-width:700px){
+  table,thead,tbody,tr,td{display:block}
+  thead{display:none}
+  tr{border:1px solid var(--line);border-radius:14px;margin:10px 0;padding:6px 14px;background:var(--panel2)}
+  td{display:flex;justify-content:space-between;align-items:center;gap:12px;border:0;padding:8px 0;text-align:end}
+  td::before{content:attr(data-label);color:var(--muted);font-size:12.5px;flex:none}
+  td .row-actions{justify-content:flex-end}
+  tr:hover td{background:none}
+}
