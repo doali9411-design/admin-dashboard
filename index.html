@@ -111,11 +111,16 @@ label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px;font-wei
   <form class="login-box" id="login-form">
     <div class="brand" style="text-align:center;padding-bottom:12px">NetFlow Control Hub<small>لوحة الإدارة المركزية</small></div>
     <p>تسجيل دخول المشرفين والمدراء</p>
+    <button type="button" class="btn primary" id="btn-google-login" style="width:100%;padding:11px;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:700">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+      الدخول المباشر بحساب Google
+    </button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><hr style="flex:1;border:0;border-top:1px solid var(--line)"><span class="muted" style="font-size:12px">أو بالبريد وكلمة المرور</span><hr style="flex:1;border:0;border-top:1px solid var(--line)"></div>
     <label for="l-email">البريد الإلكتروني</label>
-    <input id="l-email" type="email" autocomplete="username" required placeholder="admin@example.com">
+    <input id="l-email" type="email" autocomplete="username" placeholder="admin@example.com">
     <label for="l-pass">كلمة المرور</label>
-    <input id="l-pass" type="password" autocomplete="current-password" required placeholder="••••••••">
-    <button class="btn primary" id="l-btn" style="width:100%;padding:11px;margin-top:18px">تسجيل الدخول</button>
+    <input id="l-pass" type="password" autocomplete="current-password" placeholder="••••••••">
+    <button class="btn" id="l-btn" style="width:100%;padding:10px;margin-top:14px">دخول المشرف</button>
     <div id="login-err"></div>
   </form>
 </section>
@@ -179,8 +184,9 @@ label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px;font-wei
 
     <!-- 3. AGENTS -->
     <section data-pane="agents" class="hidden">
-      <div class="bar">
+      <div class="bar" style="justify-content:space-between">
         <input id="agent-q" placeholder="بحث بالبريد الإلكتروني أو الاسم">
+        <button class="btn primary" id="btn-add-agent">+ تسجيل وكيل جديد</button>
       </div>
       <div class="card"><div class="card-b wrap" id="agent-list"></div></div>
     </section>
@@ -316,11 +322,42 @@ label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px;font-wei
   </form>
 </div></div>
 
+<!-- MODAL ADD AGENT -->
+<div class="modal hidden" id="agent-modal"><div class="box">
+  <h3 style="margin-bottom:14px">تسجيل وكيل جديد في المنظومة</h3>
+  <form id="agent-form">
+    <label for="ag-name">اسم الوكيل الكامل</label>
+    <input id="ag-name" required placeholder="مثال: علي محمد - شبكة المنصور">
+
+    <label for="ag-email">البريد الإلكتروني للوكيل</label>
+    <input id="ag-email" type="email" required placeholder="agent@example.com">
+
+    <label for="ag-phone">رقم الهاتف</label>
+    <input id="ag-phone" placeholder="0770XXXXXXX">
+
+    <label for="ag-company">اسم البرج / الشركة</label>
+    <input id="ag-company" placeholder="شبكة الأمل">
+
+    <label for="ag-plan">حالة الاشتراك المبدئية</label>
+    <select id="ag-plan">
+      <option value="ACTIVE_30">مفعل - باقة شهرية (30 يوماً)</option>
+      <option value="ACTIVE_180">مفعل - باقة 6 أشهر (180 يوماً)</option>
+      <option value="ACTIVE_365">مفعل - باقة سنوية (365 يوماً)</option>
+      <option value="EXPIRED">منتهي الصلاحية (يحتاج تفعيل لاحقاً)</option>
+    </select>
+
+    <div class="row-actions" style="margin-top:20px;justify-content:flex-end">
+      <button type="button" class="btn" id="ag-cancel">إلغاء</button>
+      <button type="submit" class="btn primary" id="ag-submit">تسجيل الوكيل</button>
+    </div>
+  </form>
+</div></div>
+
 <div id="toast" role="status"></div>
 
 <script type="module">
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, collection, query, limit, onSnapshot, doc, getDoc, writeBatch, addDoc, setDoc, deleteDoc, updateDoc, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -338,9 +375,11 @@ const SUBSCRIPTION_DAYS = 30;
 const C = { USERS:"users", PAY:"payment_requests", BC:"system_broadcasts", AUDIT:"audit_logs", ADMINS:"admin_users" };
 const VER = ["app_system","version_control"];
 
+const FIRESTORE_DATABASE_ID = "ai-studio-android-netmanag-0bf5726b-c367-4f3f-a36f-0430155953b1";
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+const db = getFirestore(app, FIRESTORE_DATABASE_ID);
 
 const $ = (s,r=document) => r.querySelector(s);
 const $$ = (s,r=document) => [...r.querySelectorAll(s)];
@@ -438,6 +477,26 @@ $("#admin-q").oninput = renderAdmins;
 $("#audit-f").onchange = renderAudit;
 
 /* الدخول والتحقق من الصلاحيات */
+$("#btn-google-login").onclick = async () => {
+  const btn = $("#btn-google-login");
+  btn.disabled = true;
+  $("#login-err").textContent = "";
+  try {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+  } catch (err) {
+    console.error("Google Sign-In Error:", err);
+    if (err.code === "auth/unauthorized-domain") {
+      $("#login-err").textContent = "النطاق غير مصرح به في Firebase Console. أضف نطاق GitHub Pages في Authorized Domains.";
+    } else if (err.code === "auth/popup-closed-by-user") {
+      $("#login-err").textContent = "تم إغلاق نافذة الدخول.";
+    } else {
+      $("#login-err").textContent = "تعذر تسجيل الدخول بـ Google: " + (err.message || "");
+    }
+  }
+  btn.disabled = false;
+};
+
 $("#login-form").onsubmit = async e => {
   e.preventDefault();
   const btn = $("#l-btn");
@@ -451,6 +510,63 @@ $("#login-form").onsubmit = async e => {
   btn.disabled = false;
 };
 $("#btn-out").onclick = () => signOut(auth);
+
+// أحداث تسجيل وكيل جديد
+$("#btn-add-agent").onclick = () => {
+  if (!can("manage_agents")) { toast("غير مصرح لك بإضافة وكلاء", true); return; }
+  $("#ag-name").value = "";
+  $("#ag-email").value = "";
+  $("#ag-phone").value = "";
+  $("#ag-company").value = "";
+  $("#ag-plan").value = "ACTIVE_30";
+  $("#agent-modal").classList.remove("hidden");
+};
+$("#ag-cancel").onclick = () => $("#agent-modal").classList.add("hidden");
+
+$("#agent-form").onsubmit = async e => {
+  e.preventDefault();
+  if (!can("manage_agents")) { toast("غير مصرح لك بإضافة وكلاء", true); return; }
+  const btn = $("#ag-submit");
+  btn.disabled = true;
+  const name = $("#ag-name").value.trim();
+  const email = $("#ag-email").value.trim().toLowerCase();
+  const phone = $("#ag-phone").value.trim();
+  const company = $("#ag-company").value.trim();
+  const planVal = $("#ag-plan").value;
+
+  try {
+    const isAct = planVal.startsWith("ACTIVE");
+    const days = planVal === "ACTIVE_365" ? 365 : (planVal === "ACTIVE_180" ? 180 : 30);
+    const endMs = isAct ? (Date.now() + days * 86400000) : 0;
+    const endTs = isAct ? Timestamp.fromMillis(endMs) : null;
+
+    const newDocRef = doc(collection(db, C.USERS));
+    await setDoc(newDocRef, {
+      uid: newDocRef.id,
+      name,
+      fullName: name,
+      email,
+      phone,
+      company: company || "شبكة الوكيل",
+      role: "AGENT",
+      subscriptionStatus: isAct ? "ACTIVE" : "EXPIRED",
+      is_subscribed: isAct,
+      subscriptionEndsAt: endTs,
+      subscription_expiry_timestamp: endTs,
+      createdAt: serverTimestamp(),
+      created_at: serverTimestamp(),
+      is_banned: false
+    });
+
+    await logTo(null, "AGENT_CREATED", `تسجيل الوكيل (${name} - ${email}) بحالة (${isAct ? 'مفعل' : 'منتهي'})`, email);
+    $("#agent-modal").classList.add("hidden");
+    toast(`تم تسجيل الوكيل (${name}) بنجاح`);
+  } catch (err) {
+    console.error("Failed adding agent:", err);
+    toast("فشل إضافة الوكيل: " + err.message, true);
+  }
+  btn.disabled = false;
+};
 
 async function resolveAdminAccess(u) {
   const email = (u.email || "").toLowerCase();
@@ -550,14 +666,21 @@ function listen(){
       S[key] = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => getSec(b, f) - getSec(a, f));
       ok();
       renderAll();
-    }, bad)
+    }, err => {
+      console.warn(`Stream '${col}' warning:`, err);
+      if (key !== "admins") {
+        bad(err);
+      }
+    })
   );
 
   sub(C.PAY, "submittedAt", 500, "pay");
   sub(C.USERS, "createdAt", 1000, "users");
   sub(C.AUDIT, "at", 500, "audit");
   sub(C.BC, "createdAt", 50, "bc");
-  sub(C.ADMINS, "createdAt", 100, "admins");
+  if (S.isSuper || can("manage_settings")) {
+    sub(C.ADMINS, "createdAt", 100, "admins");
+  }
 
   // Version listener
   S.unsubs.push(onSnapshot(doc(db, ...VER), d => {
@@ -792,8 +915,8 @@ function renderBroadcast(){
     <div class="log" style="justify-content:space-between;align-items:center">
       <div>
         <div><b>${esc(b.title)}</b> ${tag(b.priority || "NORMAL")}</div>
-        <p style="margin:4px 0;font-size:13.5px">${esc(b.body)}</p>
-        <div class="muted">${fmt(b.createdAt)} · ${esc(b.createdBy || "")}</div>
+        <p style="margin:4px 0;font-size:13.5px">${esc(b.body || b.message || "")}</p>
+        <div class="muted">${fmt(b.createdAt || b.created_at)} · ${esc(b.createdBy || b.created_by || "الإدارة")}</div>
       </div>
       <div>
         <button class="btn sm ${b.active===false?"":"ok"}" data-act="toggle-bc" data-id="${b.id}">${b.active===false?"موقوف":"نشط"}</button>
@@ -1200,10 +1323,16 @@ $("#bc-send").onclick = e => busy(e.target, async () => {
   await addDoc(collection(db, C.BC), {
     title,
     body,
+    message: body,
     priority: $("#bc-pri").value,
     active: true,
+    is_active: true,
     createdAt: serverTimestamp(),
-    createdBy: S.me.email
+    created_at: serverTimestamp(),
+    createdAtMs: Date.now(),
+    created_at_ms: Date.now(),
+    createdBy: S.me.email,
+    created_by: S.me.email
   });
   await logTo(null, "BROADCAST_SENT", `إرسال تعميم: ${title}`);
   $("#bc-title").value = "";
