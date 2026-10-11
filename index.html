@@ -352,7 +352,27 @@ label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px;font-wei
     </div>
   </form>
 </div></div>
-
+<div class="modal hidden" id="edit-agent-modal"><div class="box">
+  <h3 style="margin-bottom:14px">تعديل بيانات الوكيل</h3>
+  <form id="edit-agent-form">
+    <input type="hidden" id="ea-id">
+    <label for="ea-name">الاسم</label><input id="ea-name" required>
+    <label for="ea-email">البريد (للعرض فقط)</label><input id="ea-email" readonly>
+    <label for="ea-phone">رقم الهاتف</label><input id="ea-phone">
+    <label for="ea-company">اسم البرج / الشركة</label><input id="ea-company">
+    <label for="ea-status">حالة الاشتراك</label>
+    <select id="ea-status">
+      <option value="ACTIVE">فعّال</option>
+      <option value="EXPIRED">منتهي</option>
+      <option value="SUSPENDED">مجمّد</option>
+    </select>
+    <label for="ea-end">تاريخ انتهاء الاشتراك</label><input id="ea-end" type="date">
+    <div class="row-actions" style="margin-top:20px;justify-content:flex-end">
+      <button type="button" class="btn" id="ea-cancel">إلغاء</button>
+      <button type="submit" class="btn primary" id="ea-submit">حفظ التعديلات</button>
+    </div>
+  </form>
+</div></div>
 <div id="toast" role="status"></div>
 
 <script type="module">
@@ -908,19 +928,17 @@ function renderAdmins(){
 /* 5. BROADCAST */
 function renderBroadcast(){
   const c = $("#bc-list");
-  if (!S.bc.length) {
-    c.innerHTML = `<div class="empty">لا توجد تعميمات سابقة</div>`;
-    return;
-  }
+  if (!S.bc.length) { c.innerHTML = `<div class="empty">لا توجد تعميمات سابقة</div>`; return; }
   c.innerHTML = S.bc.map(b => `
-    <div class="log" style="justify-content:space-between;align-items:center">
-      <div>
+    <div class="log" style="justify-content:space-between;align-items:center;gap:12px">
+      <div style="flex:1">
         <div><b>${esc(b.title)}</b> ${tag(b.priority || "NORMAL")}</div>
         <p style="margin:4px 0;font-size:13.5px">${esc(b.body || b.message || "")}</p>
         <div class="muted">${fmt(b.createdAt || b.created_at)} · ${esc(b.createdBy || b.created_by || "الإدارة")}</div>
       </div>
-      <div>
-        <button class="btn sm ${b.active===false?"":"ok"}" data-act="toggle-bc" data-id="${b.id}">${b.active===false?"موقوف":"نشط"}</button>
+      <div class="row-actions">
+        <button class="btn sm ${b.active === false ? "" : "ok"}" data-act="toggle-bc" data-id="${esc(b.id)}">${b.active === false ? "موقوف" : "نشط"}</button>
+        ${can("manage_settings") ? `<button class="btn sm bad" data-act="delete-bc" data-id="${esc(b.id)}">🗑️ حذف</button>` : ""}
       </div>
     </div>
   `).join("");
@@ -1364,6 +1382,105 @@ $("#v-save").onclick = e => busy(e.target, async () => {
   await logTo(null, "VERSION_UPDATED", `إصدار ${name} (كود ${code}، الحد الأدنى ${min}${force ? "، فرض التحديث" : ""})`);
   toast("تم حفظ إعدادات الإصدار بنجاح");
 });
+  /* ===== إضافات: حذف التعميمات + تعديل/حذف/رفع تجميد الوكلاء ===== */
+const closeEditAgent = () => $("#edit-agent-modal").classList.add("hidden");
+$("#ea-cancel").onclick = closeEditAgent;
+
+const toDateInput = v => {
+  const d = v?.toDate ? v.toDate() : (typeof v === "number" ? new Date(v) : null);
+  return d ? new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10) : "";
+};
+
+document.addEventListener("click", e => {
+  const btn = e.target.closest("[data-act]"); if (!btn) return;
+  const { act, id } = btn.dataset;
+
+  if (act === "delete-bc") busy(btn, async () => {
+    if (!can("manage_settings")) { toast("غير مصرح لك بحذف التعميمات", true); return; }
+    const b = S.bc.find(x => x.id === id); if (!b) return;
+    if (!confirm(`حذف التعميم "${b.title}" نهائياً؟ سيختفي من هواتف الوكلاء.`)) return;
+    await deleteDoc(doc(db, C.BC, id));
+    await logTo(null, "BROADCAST_DELETED", `حذف تعميم: ${b.title}`);
+    toast("تم حذف التعميم");
+  });
+
+  else if (act === "unsuspend") busy(btn, async () => {
+    if (!can("manage_agents")) { toast("غير مصرح لك برفع التجميد", true); return; }
+    const u = S.users.find(x => x.id === id); if (!u) return;
+    if (!confirm(`رفع التجميد عن ${u.email}؟`)) return;
+    const raw = u.subscriptionEndsAt || u.subscription_expiry_timestamp;
+    const endMs = raw?.toMillis ? raw.toMillis() : (typeof u.subscriptionExpiryAt === "number" ? u.subscriptionExpiryAt : 0);
+    const active = endMs > Date.now();
+    const b = writeBatch(db);
+    b.update(doc(db, C.USERS, id), { subscriptionStatus: active ? "ACTIVE" : "EXPIRED", is_subscribed: active, is_suspended: false });
+    logTo(b, "ACCOUNT_UNSUSPENDED", `رفع التجميد عن ${u.email} (الحالة بعدها: ${active ? "فعّال" : "منتهي"})`, u.email);
+    await b.commit();
+    toast(active ? "تم رفع التجميد والاشتراك فعّال" : "تم رفع التجميد، الاشتراك منتهي ويحتاج تمديداً");
+  });
+
+  else if (act === "delete-agent") busy(btn, async () => {
+    if (!S.isSuper) { toast("حذف الوكلاء للمدير العام فقط", true); return; }
+    const u = S.users.find(x => x.id === id); if (!u) return;
+    if (!confirm(`حذف الوكيل ${u.email} نهائياً من قاعدة البيانات؟\nهذا الإجراء لا يمكن التراجع عنه.`)) return;
+    const b = writeBatch(db);
+    b.delete(doc(db, C.USERS, id));
+    b.delete(doc(db, "app_subscriptions", id));
+    logTo(b, "AGENT_DELETED", `حذف الوكيل ${u.email}`, u.email);
+    await b.commit();
+    toast("تم حذف الوكيل");
+  });
+
+  else if (act === "edit-agent") {
+    if (!can("manage_agents")) { toast("غير مصرح لك بتعديل الوكلاء", true); return; }
+    const u = S.users.find(x => x.id === id); if (!u) return;
+    const st = u.subscriptionStatus || (u.is_subscribed ? "ACTIVE" : "EXPIRED");
+    $("#ea-id").value = id;
+    $("#ea-name").value = u.name || u.fullName || "";
+    $("#ea-email").value = u.email || "";
+    $("#ea-phone").value = u.phone || "";
+    $("#ea-company").value = u.company || "";
+    $("#ea-status").value = (st === "SUSPENDED" || u.is_suspended) ? "SUSPENDED" : (st === "ACTIVE" ? "ACTIVE" : "EXPIRED");
+    $("#ea-end").value = toDateInput(u.subscriptionEndsAt || u.subscription_expiry_timestamp || u.subscriptionExpiryAt);
+    $("#edit-agent-modal").classList.remove("hidden");
+  }
+});
+
+$("#edit-agent-form").onsubmit = async e => {
+  e.preventDefault();
+  if (!can("manage_agents")) { toast("غير مصرح لك بتعديل الوكلاء", true); return; }
+  const id = $("#ea-id").value;
+  const name = $("#ea-name").value.trim();
+  const phone = $("#ea-phone").value.trim();
+  const company = $("#ea-company").value.trim();
+  const status = $("#ea-status").value;
+  const endVal = $("#ea-end").value;
+  const endTs = endVal ? Timestamp.fromDate(new Date(endVal + "T23:59:59")) : null;
+
+  if (status === "ACTIVE" && !endTs) { toast("حدد تاريخ انتهاء الاشتراك للحالة الفعّالة", true); return; }
+  if (status === "ACTIVE" && endTs.toMillis() < Date.now()) { toast("تاريخ الانتهاء في الماضي، اختر تاريخاً مستقبلياً أو غيّر الحالة إلى منتهي", true); return; }
+
+  const btn = $("#ea-submit"); btn.disabled = true;
+  try {
+    const b = writeBatch(db);
+    b.update(doc(db, C.USERS, id), {
+      name, fullName: name, phone, company,
+      subscriptionStatus: status,
+      is_subscribed: status === "ACTIVE",
+      is_suspended: status === "SUSPENDED",
+      subscriptionEndsAt: endTs,
+      subscription_expiry_timestamp: endTs,
+      subscriptionExpiryAt: endTs ? endTs.toMillis() : 0
+    });
+    logTo(b, "AGENT_UPDATED", `تعديل بيانات الوكيل ${$("#ea-email").value} (الحالة: ${status})`, $("#ea-email").value);
+    await b.commit();
+    closeEditAgent();
+    toast("تم حفظ التعديلات");
+  } catch (err) {
+    console.error(err);
+    toast(err.message || "فشل حفظ التعديلات", true);
+  }
+  btn.disabled = false;
+};
 </script>
 </body>
 </html>
