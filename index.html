@@ -723,11 +723,21 @@ function renderAll(){
 /* 1. OVERVIEW */
 function renderOverview(){
   const pending = S.pay.filter(p => (p.status || "PENDING").toUpperCase() === "PENDING").length;
-  const activeSubs = S.users.filter(u => u.subscriptionStatus === "ACTIVE" || u.is_subscribed === true).length;
+  const emailSet = new Set();
+  const dedupedUsers = [];
+  for (const u of S.users) {
+    const em = (u.email || u.agentEmail || "").trim().toLowerCase();
+    const key = em || u.id;
+    if (!emailSet.has(key)) {
+      emailSet.add(key);
+      dedupedUsers.push(u);
+    }
+  }
+  const activeSubs = dedupedUsers.filter(u => u.subscriptionStatus === "ACTIVE" || u.is_subscribed === true).length;
   const totalRev = S.pay.filter(p => (p.status || "").toUpperCase() === "APPROVED").reduce((sum, p) => sum + (p.amount_iqd || p.amount || 10000), 0);
 
   $("#s-pending").textContent = pending;
-  $("#s-agents").textContent = S.users.length;
+  $("#s-agents").textContent = dedupedUsers.length;
   $("#s-active").textContent = activeSubs;
   $("#s-revenue").textContent = totalRev.toLocaleString("ar-IQ") + " د.ع";
 
@@ -859,7 +869,60 @@ const leftColor = d => d <= 3 ? "var(--bad)" : d <= 7 ? "var(--warn)" : "var(--o
 
 function renderAgents(){
   const q = ($("#agent-q").value || "").trim().toLowerCase();
-  const list = S.users.filter(u => !q || (u.email || "").toLowerCase().includes(q) || (u.name || u.fullName || "").toLowerCase().includes(q));
+
+  // Deduplicate agents by email to prevent duplicate rows for the same user
+  const emailMap = new Map();
+  for (const u of S.users) {
+    const em = (u.email || u.agentEmail || "").trim().toLowerCase();
+    const key = em || u.id;
+    if (!emailMap.has(key)) {
+      emailMap.set(key, [u]);
+    } else {
+      emailMap.get(key).push(u);
+    }
+  }
+
+  const dedupedList = [];
+  for (const [em, docs] of emailMap.entries()) {
+    if (docs.length === 1) {
+      dedupedList.push(docs[0]);
+    } else {
+      // Sort: prefer doc with authentic name, lastLoginAt, active subscription
+      docs.sort((a, b) => {
+        const aName = (a.name || a.fullName || "").trim();
+        const bName = (b.name || b.fullName || "").trim();
+        const aHasGoodName = aName && aName !== "وكيل" ? 4 : 0;
+        const bHasGoodName = bName && bName !== "وكيل" ? 4 : 0;
+        const aHasLogin = a.lastLoginAt ? 2 : 0;
+        const bHasLogin = b.lastLoginAt ? 2 : 0;
+        const aActive = a.subscriptionStatus === "ACTIVE" || a.is_subscribed ? 1 : 0;
+        const bActive = b.subscriptionStatus === "ACTIVE" || b.is_subscribed ? 1 : 0;
+        return (bHasGoodName + bHasLogin + bActive) - (aHasGoodName + aHasLogin + aActive);
+      });
+
+      const primary = docs[0];
+      // Merge active subscription attributes if present in any of the duplicate docs
+      for (let i = 1; i < docs.length; i++) {
+        const other = docs[i];
+        if (!primary.subscriptionEndsAt && other.subscriptionEndsAt) primary.subscriptionEndsAt = other.subscriptionEndsAt;
+        if (!primary.subscription_expiry_timestamp && other.subscription_expiry_timestamp) primary.subscription_expiry_timestamp = other.subscription_expiry_timestamp;
+        if (!primary.subscriptionExpiryAt && other.subscriptionExpiryAt) primary.subscriptionExpiryAt = other.subscriptionExpiryAt;
+        if (!primary.is_subscribed && other.is_subscribed) primary.is_subscribed = other.is_subscribed;
+        if (primary.subscriptionStatus !== "ACTIVE" && other.subscriptionStatus === "ACTIVE") primary.subscriptionStatus = "ACTIVE";
+        if (!primary.lastLoginAt && other.lastLoginAt) primary.lastLoginAt = other.lastLoginAt;
+
+        // Clean up redundant duplicate doc in background
+        if (other.id && other.id !== primary.id) {
+          try {
+            deleteDoc(doc(db, C.USERS, other.id)).catch(() => {});
+          } catch (_) {}
+        }
+      }
+      dedupedList.push(primary);
+    }
+  }
+
+  const list = dedupedList.filter(u => !q || (u.email || "").toLowerCase().includes(q) || (u.name || u.fullName || "").toLowerCase().includes(q));
   const c = $("#agent-list");
   if (!list.length) { c.innerHTML = `<div class="empty">لا يوجد وكلاء مطابقون</div>`; return; }
 
@@ -1101,6 +1164,15 @@ async function approve(p){
     };
     b.set(doc(db, C.USERS, targetUid), subPayload, { merge: true });
     b.set(doc(db, "app_subscriptions", targetUid), subPayload, { merge: true });
+
+    // Delete any duplicate documents in users collection for this email
+    const emLower = email.toLowerCase().trim();
+    if (emLower) {
+      const dupes = S.users.filter(u => (u.email || u.agentEmail || "").toLowerCase().trim() === emLower && u.id !== targetUid);
+      dupes.forEach(d => {
+        b.delete(doc(db, C.USERS, d.id));
+      });
+    }
   }
 
   logTo(b, "SUBSCRIPTION_ACTIVATED", `تفعيل باقة ${planLabel} (${days} يوم) لحساب ${email} (حوالة ${txId})`, email);
