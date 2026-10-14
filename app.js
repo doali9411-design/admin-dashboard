@@ -16,8 +16,8 @@ const firebaseConfig = {
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+const FIRESTORE_DATABASE_ID = "ai-studio-android-netmanag-0bf5726b-c367-4f3f-a36f-0430155953b1";
+const db = firebase.app().firestore ? firebase.app().firestore(FIRESTORE_DATABASE_ID) : firebase.firestore();
 
 // Admin Constant
 const SUPER_ADMIN_EMAIL = "mantime50@gmail.com";
@@ -228,13 +228,55 @@ function initRealtimeData() {
       updateStats();
     }, (err) => console.error("Error listening to payment_requests:", err));
 
-  // 2. Users / Agents Registry Listener
+  // 2. Users / Agents Registry Listener (Deduplicated strictly by email to prevent duplicate agent rows)
   db.collection("users")
     .onSnapshot((snapshot) => {
-      allAgents = [];
+      const emailMap = new Map();
       snapshot.forEach(doc => {
-        allAgents.push({ id: doc.id, ...doc.data() });
+        const data = { id: doc.id, ...doc.data() };
+        const em = (data.email || data.agentEmail || "").trim().toLowerCase();
+        const key = em || doc.id;
+        if (!emailMap.has(key)) {
+          emailMap.set(key, [data]);
+        } else {
+          emailMap.get(key).push(data);
+        }
       });
+
+      allAgents = [];
+      for (const [key, docs] of emailMap.entries()) {
+        if (docs.length === 1) {
+          allAgents.push(docs[0]);
+        } else {
+          docs.sort((a, b) => {
+            const aName = (a.fullName || a.name || "").trim();
+            const bName = (b.fullName || b.name || "").trim();
+            const aGoodName = aName && aName !== "وكيل" ? 4 : 0;
+            const bGoodName = bName && bName !== "وكيل" ? 4 : 0;
+            const aLogin = a.lastLoginAt ? 2 : 0;
+            const bLogin = b.lastLoginAt ? 2 : 0;
+            const aSub = (a.is_subscribed || a.subscriptionStatus === "ACTIVE") ? 1 : 0;
+            const bSub = (b.is_subscribed || b.subscriptionStatus === "ACTIVE") ? 1 : 0;
+            return (bGoodName + bLogin + bSub) - (aGoodName + aLogin + aSub);
+          });
+          const primary = { ...docs[0] };
+          for (let i = 1; i < docs.length; i++) {
+            const other = docs[i];
+            if (!primary.subscription_expiry_timestamp && other.subscription_expiry_timestamp) primary.subscription_expiry_timestamp = other.subscription_expiry_timestamp;
+            if (!primary.subscriptionExpiryAt && other.subscriptionExpiryAt) primary.subscriptionExpiryAt = other.subscriptionExpiryAt;
+            if (!primary.is_subscribed && other.is_subscribed) primary.is_subscribed = other.is_subscribed;
+            if (primary.subscriptionStatus !== "ACTIVE" && other.subscriptionStatus === "ACTIVE") primary.subscriptionStatus = "ACTIVE";
+            if (!primary.lastLoginAt && other.lastLoginAt) primary.lastLoginAt = other.lastLoginAt;
+
+            if (other.id && other.id !== primary.id) {
+              try {
+                db.collection("users").document(other.id).delete().catch(() => {});
+              } catch (_) {}
+            }
+          }
+          allAgents.push(primary);
+        }
+      }
       renderAgentsTable();
       updateStats();
     }, (err) => console.error("Error listening to users:", err));
@@ -337,9 +379,10 @@ function renderPendingTable() {
   }
 
   tbody.innerHTML = filtered.map(req => {
-    const planName = getPlanArabicName(req.plan_type || 'MONTHLY');
-    const amount = Number(req.amount_iqd || 10000).toLocaleString('ar-IQ') + ' د.ع';
-    const method = req.payment_method === 'ZAIN_CASH' ? 'زين كاش' : 'حساب QI';
+    const planName = getPlanArabicName(req.plan_type || req.planType || 'MONTHLY');
+    const amountVal = req.amount_iqd || req.amount || ((req.plan_type || req.planType) === 'ANNUAL' ? 50000 : ((req.plan_type || req.planType) === 'SEMI_ANNUAL' ? 25000 : 10000));
+    const amount = Number(amountVal).toLocaleString('ar-IQ') + ' د.ع';
+    const method = (req.payment_method === 'ZAIN_CASH' || req.paymentMethod === 'ZAIN_CASH') ? 'زين كاش' : 'حساب QI';
     const txId = req.transactionId || req.transaction_id || 'غير متوفر';
     const timeStr = formatTimestamp(req.submittedAt || req.created_at || req.timestamp);
     const emailVal = req.agentEmail || req.email || '';
@@ -436,11 +479,12 @@ async function approvePaymentRequest(requestId) {
 
   const adminEmail = (currentAdminUser && currentAdminUser.email) ? currentAdminUser.email : SUPER_ADMIN_EMAIL;
   const cleanEmail = (req.email || '').trim().toLowerCase();
-  const planType = (req.plan_type || 'MONTHLY').toUpperCase();
+  const planType = (req.plan_type || req.planType || 'MONTHLY').toUpperCase();
 
   let durationDays = 30;
   if (planType === 'ANNUAL') durationDays = 365;
   else if (planType === 'SEMI_ANNUAL') durationDays = 180;
+  else if (req.duration_days || req.durationDays) durationDays = Number(req.duration_days || req.durationDays);
 
   const nowMs = Date.now();
   const expiryMs = nowMs + (durationDays * 24 * 3600 * 1000);
@@ -472,12 +516,28 @@ async function approvePaymentRequest(requestId) {
       duration_days: durationDays
     };
 
-    // Update in users & app_subscriptions
-    await db.collection("users").document(emailHash).set(subData, { merge: true });
+    // Update in users & app_subscriptions without creating duplicates
     const targetUid = req.agentUid || req.uid;
     if (targetUid) {
       await db.collection("users").document(targetUid).set(subData, { merge: true });
       await db.collection("app_subscriptions").document(targetUid).set(subData, { merge: true });
+      // If an orphan doc with emailHash existed in users collection, remove it so it doesn't appear twice
+      if (emailHash && emailHash !== targetUid) {
+        try {
+          await db.collection("users").document(emailHash).delete();
+        } catch (_) {}
+      }
+    } else {
+      // Find existing user doc by email
+      const existingUserSnap = await db.collection("users").where("email", "==", cleanEmail).get();
+      if (!existingUserSnap.empty) {
+        // Update all matching docs or the best one
+        for (const docSnap of existingUserSnap.docs) {
+          await docSnap.ref.set(subData, { merge: true });
+        }
+      } else {
+        await db.collection("users").document(emailHash).set(subData, { merge: true });
+      }
     }
     await db.collection("app_subscriptions").document(emailHash).set(subData, { merge: true });
 
