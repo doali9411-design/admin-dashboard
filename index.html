@@ -104,7 +104,6 @@ label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px;font-wei
   .f2,.perm-grid{grid-template-columns:1fr}
 }
 </style>
-     <link rel="stylesheet" href="theme.css">
 </head>
 <body>
 
@@ -477,14 +476,21 @@ function show(v){
     return;
   }
 
+  S.currentView = v;
   $$("[data-pane]").forEach(p => p.classList.toggle("hidden", p.dataset.pane !== v));
   $$(".nav").forEach(n => n.classList.toggle("active", n.dataset.view === v));
   if (TITLES[v]) {
     $("#title").textContent = TITLES[v][0];
     $("#subtitle").textContent = TITLES[v][1];
   }
-  location.hash = v;
+  if (location.hash.slice(1) !== v) {
+    location.hash = v;
+  }
 }
+window.addEventListener("hashchange", () => {
+  const h = location.hash.slice(1);
+  if (h && TITLES[h] && S.currentView !== h) show(h);
+});
 $$(".nav").forEach(n => n.onclick = () => show(n.dataset.view));
 $$("[data-go]").forEach(b => b.onclick = () => show(b.dataset.go));
 $$("#pay-tabs .btn").forEach(b => b.onclick = () => {
@@ -659,7 +665,8 @@ onAuthStateChanged(auth, async user => {
 
   $("#login").classList.add("hidden");
   $("#app").classList.remove("hidden");
-  show(TITLES[location.hash.slice(1)] ? location.hash.slice(1) : "overview");
+  const targetView = S.currentView || (TITLES[location.hash.slice(1)] ? location.hash.slice(1) : "overview");
+  show(targetView);
   listen();
 });
 
@@ -1083,10 +1090,14 @@ async function approve(p){
     durationDays: days
   });
 
-  if (targetUid) {
+  const matchedUser = S.users.find(u => (targetUid && (u.id === targetUid || u.uid === targetUid)) || (email && u.email && u.email.toLowerCase() === email.toLowerCase()));
+  const effectiveUid = targetUid || matchedUser?.id || matchedUser?.uid;
+
+  if (effectiveUid) {
     const subPayload = {
       subscriptionStatus: "ACTIVE",
       status: "ACTIVE",
+      subscriptionType: "PAID",
       is_subscribed: true,
       is_suspended: false,
       subscriptionEndsAt: expiryTs,
@@ -1099,8 +1110,8 @@ async function approve(p){
       activated_at: serverTimestamp(),
       activated_by: S.me.email
     };
-    b.set(doc(db, C.USERS, targetUid), subPayload, { merge: true });
-    b.set(doc(db, "app_subscriptions", targetUid), subPayload, { merge: true });
+    b.set(doc(db, C.USERS, effectiveUid), subPayload, { merge: true });
+    b.set(doc(db, "app_subscriptions", effectiveUid), subPayload, { merge: true });
   }
 
   logTo(b, "SUBSCRIPTION_ACTIVATED", `تفعيل باقة ${planLabel} (${days} يوم) لحساب ${email} (حوالة ${txId})`, email);
@@ -1317,18 +1328,37 @@ document.addEventListener("click", e => {
       toast("صورة الوصل غير متوفرة أو رابط غير صالح", true);
     }
   }
-  else if (act === "extend" && u) busy(btn, async () => {
+  else if (act === "extend" && (u || id)) busy(btn, async () => {
     if (!can("manage_subscriptions")) { toast("غير مصرح لك بتمديد الاشتراكات", true); return; }
-    if (!confirm(`تمديد اشتراك ${u.email} ${SUBSCRIPTION_DAYS} يوماً؟`)) return;
-    const base = u.subscriptionEndsAt?.toDate && u.subscriptionEndsAt.toDate() > new Date() ? u.subscriptionEndsAt.toDate() : new Date();
+    const target = u || S.users.find(x => x.id === id || x.uid === id || x.email === id);
+    const email = target?.email || id;
+    if (!confirm(`تمديد اشتراك ${email} ${SUBSCRIPTION_DAYS} يوماً؟`)) return;
+    const base = target?.subscriptionEndsAt?.toDate && target.subscriptionEndsAt.toDate() > new Date()
+      ? target.subscriptionEndsAt.toDate()
+      : (target?.trialEndsAt?.toDate && target.trialEndsAt.toDate() > new Date() ? target.trialEndsAt.toDate() : new Date());
+    const newEndTs = Timestamp.fromDate(new Date(base.getTime() + SUBSCRIPTION_DAYS * 864e5));
     const b = writeBatch(db);
-    b.update(doc(db, C.USERS, u.id), {
+    const subPayload = {
       subscriptionStatus: "ACTIVE",
-      subscriptionEndsAt: Timestamp.fromDate(new Date(base.getTime() + SUBSCRIPTION_DAYS * 864e5))
-    });
-    logTo(b, "PLAN_EXTENDED", `تمديد اشتراك ${u.email} ${SUBSCRIPTION_DAYS} يوماً`, u.email);
+      status: "ACTIVE",
+      subscriptionType: "PAID",
+      is_subscribed: true,
+      is_suspended: false,
+      subscriptionEndsAt: newEndTs,
+      subscription_expiry_timestamp: newEndTs,
+      subscriptionExpiryAt: newEndTs.toMillis(),
+      plan_type: "MONTHLY",
+      planType: "MONTHLY",
+      duration_days: SUBSCRIPTION_DAYS,
+      durationDays: SUBSCRIPTION_DAYS,
+      activated_at: serverTimestamp(),
+      activated_by: S.me.email
+    };
+    b.set(doc(db, C.USERS, id), subPayload, { merge: true });
+    b.set(doc(db, "app_subscriptions", id), subPayload, { merge: true });
+    logTo(b, "PLAN_EXTENDED", `تمديد اشتراك ${email} ${SUBSCRIPTION_DAYS} يوماً`, email);
     await b.commit();
-    toast("تم تمديد الاشتراك بنجاح");
+    toast(`تم تمديد اشتراك ${email} بنجاح`);
   });
   else if (act === "suspend" && u) busy(btn, async () => {
     if (!can("manage_agents")) { toast("غير مصرح لك بتجميد الحسابات", true); return; }
@@ -1357,6 +1387,52 @@ document.addEventListener("click", e => {
   else if (act === "toggle-bc") {
     const x = S.bc.find(b => b.id === id);
     if (x) busy(btn, () => setDoc(doc(db, C.BC, id), { active: x.active === false }, { merge: true }));
+  }
+  else if (act === "delete-bc") busy(btn, async () => {
+    if (!can("manage_settings")) { toast("غير مصرح لك بحذف التعميمات", true); return; }
+    const b = S.bc.find(x => x.id === id); if (!b) return;
+    if (!confirm(`حذف التعميم "${b.title}" نهائياً؟ سيختفي من هواتف الوكلاء.`)) return;
+    await deleteDoc(doc(db, C.BC, id));
+    await logTo(null, "BROADCAST_DELETED", `حذف تعميم: ${b.title}`);
+    toast("تم حذف التعميم");
+  });
+  else if (act === "unsuspend") busy(btn, async () => {
+    if (!can("manage_agents")) { toast("غير مصرح لك برفع التجميد", true); return; }
+    const u = S.users.find(x => x.id === id); if (!u) return;
+    if (!confirm(`رفع التجميد عن ${u.email}؟`)) return;
+    const raw = u.subscriptionEndsAt || u.subscription_expiry_timestamp;
+    const endMs = raw?.toMillis ? raw.toMillis() : (typeof u.subscriptionExpiryAt === "number" ? u.subscriptionExpiryAt : 0);
+    const active = endMs > Date.now();
+    const b = writeBatch(db);
+    b.update(doc(db, C.USERS, id), { subscriptionStatus: active ? "ACTIVE" : "EXPIRED", is_subscribed: active, is_suspended: false });
+    b.set(doc(db, "app_subscriptions", id), { subscriptionStatus: active ? "ACTIVE" : "EXPIRED", is_subscribed: active, is_suspended: false }, { merge: true });
+    logTo(b, "ACCOUNT_UNSUSPENDED", `رفع التجميد عن ${u.email} (الحالة بعدها: ${active ? "فعّال" : "منتهي"})`, u.email);
+    await b.commit();
+    toast(active ? "تم رفع التجميد والاشتراك فعّال" : "تم رفع التجميد، الاشتراك منتهي ويحتاج تمديداً");
+  });
+  else if (act === "delete-agent") busy(btn, async () => {
+    if (!S.isSuper) { toast("حذف الوكلاء للمدير العام فقط", true); return; }
+    const u = S.users.find(x => x.id === id); if (!u) return;
+    if (!confirm(`حذف الوكيل ${u.email} نهائياً من قاعدة البيانات؟\nهذا الإجراء لا يمكن التراجع عنه.`)) return;
+    const b = writeBatch(db);
+    b.delete(doc(db, C.USERS, id));
+    b.delete(doc(db, "app_subscriptions", id));
+    logTo(b, "AGENT_DELETED", `حذف الوكيل ${u.email}`, u.email);
+    await b.commit();
+    toast("تم حذف الوكيل");
+  });
+  else if (act === "edit-agent") {
+    if (!can("manage_agents")) { toast("غير مصرح لك بتعديل الوكلاء", true); return; }
+    const u = S.users.find(x => x.id === id); if (!u) return;
+    const st = u.subscriptionStatus || (u.is_subscribed ? "ACTIVE" : "EXPIRED");
+    $("#ea-id").value = id;
+    $("#ea-name").value = u.name || u.fullName || "";
+    $("#ea-email").value = u.email || "";
+    $("#ea-phone").value = u.phone || "";
+    $("#ea-company").value = u.company || "";
+    $("#ea-status").value = (st === "SUSPENDED" || u.is_suspended) ? "SUSPENDED" : (st === "ACTIVE" ? "ACTIVE" : "EXPIRED");
+    $("#ea-end").value = toDateInput(u.subscriptionEndsAt || u.subscription_expiry_timestamp || u.subscriptionExpiryAt);
+    $("#edit-agent-modal").classList.remove("hidden");
   }
 });
 
@@ -1409,7 +1485,8 @@ $("#v-save").onclick = e => busy(e.target, async () => {
   await logTo(null, "VERSION_UPDATED", `إصدار ${name} (كود ${code}، الحد الأدنى ${min}${force ? "، فرض التحديث" : ""})`);
   toast("تم حفظ إعدادات الإصدار بنجاح");
 });
-  /* ===== إضافات: حذف التعميمات + تعديل/حذف/رفع تجميد الوكلاء ===== */
+
+/* ===== إضافات: إغلاق مودال تعديل الوكيل وتنسيق التاريخ ===== */
 const closeEditAgent = () => $("#edit-agent-modal").classList.add("hidden");
 $("#ea-cancel").onclick = closeEditAgent;
 
@@ -1417,60 +1494,6 @@ const toDateInput = v => {
   const d = v?.toDate ? v.toDate() : (typeof v === "number" ? new Date(v) : null);
   return d ? new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10) : "";
 };
-
-document.addEventListener("click", e => {
-  const btn = e.target.closest("[data-act]"); if (!btn) return;
-  const { act, id } = btn.dataset;
-
-  if (act === "delete-bc") busy(btn, async () => {
-    if (!can("manage_settings")) { toast("غير مصرح لك بحذف التعميمات", true); return; }
-    const b = S.bc.find(x => x.id === id); if (!b) return;
-    if (!confirm(`حذف التعميم "${b.title}" نهائياً؟ سيختفي من هواتف الوكلاء.`)) return;
-    await deleteDoc(doc(db, C.BC, id));
-    await logTo(null, "BROADCAST_DELETED", `حذف تعميم: ${b.title}`);
-    toast("تم حذف التعميم");
-  });
-
-  else if (act === "unsuspend") busy(btn, async () => {
-    if (!can("manage_agents")) { toast("غير مصرح لك برفع التجميد", true); return; }
-    const u = S.users.find(x => x.id === id); if (!u) return;
-    if (!confirm(`رفع التجميد عن ${u.email}؟`)) return;
-    const raw = u.subscriptionEndsAt || u.subscription_expiry_timestamp;
-    const endMs = raw?.toMillis ? raw.toMillis() : (typeof u.subscriptionExpiryAt === "number" ? u.subscriptionExpiryAt : 0);
-    const active = endMs > Date.now();
-    const b = writeBatch(db);
-    b.update(doc(db, C.USERS, id), { subscriptionStatus: active ? "ACTIVE" : "EXPIRED", is_subscribed: active, is_suspended: false });
-    logTo(b, "ACCOUNT_UNSUSPENDED", `رفع التجميد عن ${u.email} (الحالة بعدها: ${active ? "فعّال" : "منتهي"})`, u.email);
-    await b.commit();
-    toast(active ? "تم رفع التجميد والاشتراك فعّال" : "تم رفع التجميد، الاشتراك منتهي ويحتاج تمديداً");
-  });
-
-  else if (act === "delete-agent") busy(btn, async () => {
-    if (!S.isSuper) { toast("حذف الوكلاء للمدير العام فقط", true); return; }
-    const u = S.users.find(x => x.id === id); if (!u) return;
-    if (!confirm(`حذف الوكيل ${u.email} نهائياً من قاعدة البيانات؟\nهذا الإجراء لا يمكن التراجع عنه.`)) return;
-    const b = writeBatch(db);
-    b.delete(doc(db, C.USERS, id));
-    b.delete(doc(db, "app_subscriptions", id));
-    logTo(b, "AGENT_DELETED", `حذف الوكيل ${u.email}`, u.email);
-    await b.commit();
-    toast("تم حذف الوكيل");
-  });
-
-  else if (act === "edit-agent") {
-    if (!can("manage_agents")) { toast("غير مصرح لك بتعديل الوكلاء", true); return; }
-    const u = S.users.find(x => x.id === id); if (!u) return;
-    const st = u.subscriptionStatus || (u.is_subscribed ? "ACTIVE" : "EXPIRED");
-    $("#ea-id").value = id;
-    $("#ea-name").value = u.name || u.fullName || "";
-    $("#ea-email").value = u.email || "";
-    $("#ea-phone").value = u.phone || "";
-    $("#ea-company").value = u.company || "";
-    $("#ea-status").value = (st === "SUSPENDED" || u.is_suspended) ? "SUSPENDED" : (st === "ACTIVE" ? "ACTIVE" : "EXPIRED");
-    $("#ea-end").value = toDateInput(u.subscriptionEndsAt || u.subscription_expiry_timestamp || u.subscriptionExpiryAt);
-    $("#edit-agent-modal").classList.remove("hidden");
-  }
-});
 
 $("#edit-agent-form").onsubmit = async e => {
   e.preventDefault();
@@ -1509,6 +1532,5 @@ $("#edit-agent-form").onsubmit = async e => {
   btn.disabled = false;
 };
 </script>
-     <script src="ui.js"></script>
 </body>
 </html>
