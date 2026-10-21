@@ -378,8 +378,8 @@ label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px;font-wei
 
 <script type="module">
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, setPersistence, browserSessionPersistence, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, query, limit, onSnapshot, doc, getDoc, writeBatch, addDoc, setDoc, deleteDoc, updateDoc, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, query, limit, onSnapshot, doc, getDoc, writeBatch, addDoc, setDoc, deleteDoc, updateDoc, serverTimestamp, Timestamp, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBMWq8i9SmpaKcMvMXq2gv-mTOdth6Vcxg",
@@ -400,118 +400,7 @@ const FIRESTORE_DATABASE_ID = "ai-studio-android-netmanag-0bf5726b-c367-4f3f-a36
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-setPersistence(auth, browserSessionPersistence).catch(() => {});
 const db = getFirestore(app, FIRESTORE_DATABASE_ID);
-
-/* إعدادات إغلاق الجلسة التلقائي بعد 5 دقائق من عدم النشاط */
-const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000; // 5 دقائق
-const SESSION_ACTIVE_KEY = "netflow_admin_session_active";
-const LAST_ACTIVITY_KEY = "netflow_admin_last_active_ts";
-let lastActivityTs = Number(localStorage.getItem(LAST_ACTIVITY_KEY) || 0);
-let idleTimerInterval = null;
-
-function markAdminActivity(forceWrite = false) {
-  const now = Date.now();
-  if (forceWrite || now - lastActivityTs > 2000) {
-    lastActivityTs = now;
-    try {
-      localStorage.setItem(LAST_ACTIVITY_KEY, String(now));
-      sessionStorage.setItem(SESSION_ACTIVE_KEY, "1");
-    } catch (_) {}
-  }
-}
-
-function clearAdminSessionFlags() {
-  lastActivityTs = 0;
-  try {
-    localStorage.removeItem(LAST_ACTIVITY_KEY);
-    sessionStorage.removeItem(SESSION_ACTIVE_KEY);
-  } catch (_) {}
-}
-
-function isAdminSessionExpired() {
-  try {
-    const isTabSession = sessionStorage.getItem(SESSION_ACTIVE_KEY) === "1";
-    const savedTs = Number(localStorage.getItem(LAST_ACTIVITY_KEY) || 0);
-    if (!isTabSession || !savedTs) return true;
-    return (Date.now() - savedTs) >= INACTIVITY_TIMEOUT_MS;
-  } catch (_) {
-    return false;
-  }
-}
-
-async function checkAndEnforceIdleLogout() {
-  if (!S.me) return;
-  const savedTs = Number(localStorage.getItem(LAST_ACTIVITY_KEY) || lastActivityTs || 0);
-  if (!savedTs || (Date.now() - savedTs) >= INACTIVITY_TIMEOUT_MS) {
-    clearAdminSessionFlags();
-    S.me = null;
-    if ($("#l-pass")) $("#l-pass").value = "";
-    $("#login-err").textContent = "تم إغلاق الجلسة تلقائياً لعدم النشاط لمدة 5 دقائق. يرجى تسجيل الدخول من جديد.";
-    toast("انتهت الجلسة لعدم النشاط لمدة 5 دقائق، يرجى تسجيل الدخول مجدداً", true);
-    try { await signOut(auth); } catch (_) {}
-  }
-}
-
-["mousemove", "mousedown", "keydown", "touchstart", "scroll", "click"].forEach(evt => {
-  window.addEventListener(evt, () => {
-    if (S.me) markAdminActivity(false);
-  }, { passive: true });
-});
-
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && S.me) {
-    checkAndEnforceIdleLogout();
-  }
-});
-window.addEventListener("focus", () => {
-  if (S.me) {
-    checkAndEnforceIdleLogout();
-  }
-});
-setInterval(checkAndEnforceIdleLogout, 5000);
-
-function translateAuthError(err, defaultMsg = "البريد الإلكتروني أو الرمز السري غير صحيح، يرجى التأكد والمحاولة مرة أخرى.") {
-  const code = (err?.code || "").toLowerCase();
-  const msg = (err?.message || "").toLowerCase();
-  if (code.includes("invalid-email") || msg.includes("invalid-email") || msg.includes("badly formatted")) {
-    return "صيغة البريد الإلكتروني غير صحيحة، يرجى التأكد من كتابة البريد بشكل سليم.";
-  }
-  if (code.includes("user-not-found") || msg.includes("user-not-found") || msg.includes("email_not_found") || msg.includes("no user record")) {
-    return "البريد الإلكتروني غير صحيح أو غير مسجل في النظام.";
-  }
-  if (code.includes("wrong-password") || msg.includes("wrong-password") || msg.includes("invalid_password") || msg.includes("password is invalid")) {
-    return "الرمز السري (كلمة المرور) غير صحيح، يرجى التأكد والمحاولة مرة أخرى.";
-  }
-  if (code.includes("invalid-credential") || code.includes("invalid-login-credentials") || msg.includes("invalid-credential") || msg.includes("invalid_login_credentials") || msg.includes("supplied auth credential")) {
-    return "البريد الإلكتروني أو الرمز السري (كلمة المرور) غير صحيح، يرجى التأكد والمحاولة مرة أخرى.";
-  }
-  if (code.includes("user-disabled") || msg.includes("user-disabled")) {
-    return "تم تعطيل هذا الحساب الإداري.";
-  }
-  if (code.includes("too-many-requests") || msg.includes("too-many-requests") || msg.includes("blocked all requests")) {
-    return "تم حظر المحاولات مؤقتاً لكثرة المحاولات الخاطئة. يرجى الانتظار قليلاً ثم المحاولة ثانية.";
-  }
-  if (code.includes("email-already-in-use") || msg.includes("email-already-in-use")) {
-    return "هذا البريد الإلكتروني مسجل مسبقاً.";
-  }
-  if (code.includes("weak-password") || msg.includes("weak-password")) {
-    return "الرمز السري ضعيف، يجب أن يتكون من 6 أحرف أو أرقام على الأقل.";
-  }
-  if (code.includes("network-request-failed") || msg.includes("network")) {
-    return "تعذر الاتصال بالخادم، يرجى التحقق من اتصال الإنترنت.";
-  }
-  if (code.includes("unauthorized-domain")) {
-    return "النطاق غير مصرح به في إعدادات Firebase.";
-  }
-  if (code.includes("popup-closed-by-user")) {
-    return "تم إغلاق نافذة تسجيل الدخول قبل إتمام العملية.";
-  }
-  if (err?.message && /[\u0600-\u06FF]/.test(err.message)) {
-    return err.message;
-  }
-  return defaultMsg;
-}
 
 const $ = (s,r=document) => r.querySelector(s);
 const $$ = (s,r=document) => [...r.querySelectorAll(s)];
@@ -614,14 +503,17 @@ $("#btn-google-login").onclick = async () => {
   btn.disabled = true;
   $("#login-err").textContent = "";
   try {
-    markAdminActivity(true);
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
-    markAdminActivity(true);
   } catch (err) {
-    clearAdminSessionFlags();
     console.error("Google Sign-In Error:", err);
-    $("#login-err").textContent = translateAuthError(err, "تعذر تسجيل الدخول عبر حساب Google، يرجى المحاولة مرة أخرى.");
+    if (err.code === "auth/unauthorized-domain") {
+      $("#login-err").textContent = "النطاق غير مصرح به في Firebase Console. أضف نطاق GitHub Pages في Authorized Domains.";
+    } else if (err.code === "auth/popup-closed-by-user") {
+      $("#login-err").textContent = "تم إغلاق نافذة الدخول.";
+    } else {
+      $("#login-err").textContent = "تعذر تسجيل الدخول بـ Google: " + (err.message || "");
+    }
   }
   btn.disabled = false;
 };
@@ -632,21 +524,13 @@ $("#login-form").onsubmit = async e => {
   btn.disabled = true;
   $("#login-err").textContent = "";
   try {
-    markAdminActivity(true);
     await signInWithEmailAndPassword(auth, $("#l-email").value.trim(), $("#l-pass").value);
-    markAdminActivity(true);
   } catch(err) {
-    clearAdminSessionFlags();
-    $("#login-err").textContent = translateAuthError(err, "البريد الإلكتروني أو الرمز السري (كلمة المرور) غير صحيح.");
+    $("#login-err").textContent = "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
   }
   btn.disabled = false;
 };
-$("#btn-out").onclick = () => {
-  clearAdminSessionFlags();
-  S.me = null;
-  if ($("#l-pass")) $("#l-pass").value = "";
-  signOut(auth);
-};
+$("#btn-out").onclick = () => signOut(auth);
 
 // أحداث تسجيل وكيل جديد
 $("#btn-add-agent").onclick = () => {
@@ -751,32 +635,18 @@ onAuthStateChanged(auth, async user => {
   S.unsubs.forEach(u => u());
   S.unsubs = [];
   if (!user) {
-    S.me = null;
     $("#app").classList.add("hidden");
     $("#login").classList.remove("hidden");
-    return;
-  }
-
-  // التحقق من صلاحية الجلسة وعدم مرور 5 دقائق من عدم النشاط عند فتح الرابط
-  if (isAdminSessionExpired()) {
-    clearAdminSessionFlags();
-    S.me = null;
-    $("#app").classList.add("hidden");
-    $("#login").classList.remove("hidden");
-    await signOut(auth);
     return;
   }
 
   const access = await resolveAdminAccess(user);
   if (!access || access.error) {
-    clearAdminSessionFlags();
-    S.me = null;
     $("#login-err").textContent = access?.error || "هذا الحساب ليس له صلاحيات إدارية.";
     await signOut(auth);
     return;
   }
 
-  markAdminActivity(true);
   S.me = user;
   S.isSuper = access.isSuper;
   S.perms = access.permissions;
@@ -812,77 +682,9 @@ function listen(){
 
   const getSec = (d, f) => d[f]?.seconds || d.submittedAt?.seconds || d.createdAt?.seconds || d.created_at?.seconds || d.timestamp?.seconds || (d.created_timestamp_ms ? Math.floor(d.created_timestamp_ms/1000) : 0);
 
-  function deduplicateAndCleanUserDocs(rawDocs) {
-    const emailToDoc = new Map();
-    const uidToDoc = new Map();
-    const result = [];
-
-    const scoreDoc = (d) => {
-      let score = 0;
-      const uid = (d.uid || d.id || "").trim();
-      if (d.id && d.uid && d.id === d.uid) score += 10;
-      if (d.id && d.id.length >= 20) score += 5;
-      const name = (d.name || d.fullName || "").trim();
-      if (name && name !== "وكيل" && name !== "مستخدم Google") score += 6;
-      if (d.lastLoginAt || d.lastLoginTimestamp) score += 4;
-      if (d.subscriptionStatus === "ACTIVE" || d.is_subscribed === true) score += 4;
-      if (d.subscriptionEndsAt || d.subscription_expiry_timestamp || d.subscriptionExpiryAt) score += 2;
-      if (d.subscribers_count && d.subscribers_count > 0) score += 3;
-      return score;
-    };
-
-    const sorted = [...rawDocs].sort((a, b) => scoreDoc(b) - scoreDoc(a));
-
-    for (const d of sorted) {
-      const email = (d.email || d.agentEmail || "").trim().toLowerCase();
-      const uid = (d.uid || d.id || "").trim();
-
-      let primary = (email && emailToDoc.get(email)) || (uid && uidToDoc.get(uid)) || null;
-
-      if (!primary) {
-        primary = { ...d };
-        if (email) emailToDoc.set(email, primary);
-        if (uid) uidToDoc.set(uid, primary);
-        result.push(primary);
-      } else {
-        if (!primary.subscriptionEndsAt && d.subscriptionEndsAt) primary.subscriptionEndsAt = d.subscriptionEndsAt;
-        if (!primary.subscription_expiry_timestamp && d.subscription_expiry_timestamp) primary.subscription_expiry_timestamp = d.subscription_expiry_timestamp;
-        if (!primary.subscriptionExpiryAt && d.subscriptionExpiryAt) primary.subscriptionExpiryAt = d.subscriptionExpiryAt;
-        if (primary.subscriptionStatus !== "ACTIVE" && (d.subscriptionStatus === "ACTIVE" || d.is_subscribed === true)) {
-          primary.subscriptionStatus = "ACTIVE";
-          primary.is_subscribed = true;
-        }
-        if (!primary.lastLoginAt && d.lastLoginAt) primary.lastLoginAt = d.lastLoginAt;
-        if ((!primary.name || primary.name === "وكيل") && d.name && d.name !== "وكيل") primary.name = d.name;
-        if (!primary.phone && d.phone) primary.phone = d.phone;
-        if (!primary.company && d.company) primary.company = d.company;
-        if (!primary.photoUrl && d.photoUrl) primary.photoUrl = d.photoUrl;
-        if (!primary.subscribers_count && d.subscribers_count) primary.subscribers_count = d.subscribers_count;
-
-        if (email && !emailToDoc.has(email)) emailToDoc.set(email, primary);
-        if (uid && !uidToDoc.has(uid)) uidToDoc.set(uid, primary);
-
-        // Safe cleanup of orphan duplicate doc
-        if (d.id && d.id !== primary.id) {
-          try {
-            deleteDoc(doc(db, C.USERS, d.id)).catch(err => {
-              console.warn("Notice: could not delete orphan doc", d.id, err);
-            });
-          } catch (_) {}
-        }
-      }
-    }
-    return result;
-  }
-
   const sub = (col, f, n, key) => S.unsubs.push(
     onSnapshot(query(collection(db, col), limit(n)), s => {
-      const rawList = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => getSec(b, f) - getSec(a, f));
-      if (key === "users") {
-        S.users = deduplicateAndCleanUserDocs(rawList);
-      } else {
-        S[key] = rawList;
-      }
+      S[key] = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => getSec(b, f) - getSec(a, f));
       ok();
       renderAll();
     }, err => {
@@ -921,11 +723,21 @@ function renderAll(){
 /* 1. OVERVIEW */
 function renderOverview(){
   const pending = S.pay.filter(p => (p.status || "PENDING").toUpperCase() === "PENDING").length;
-  const activeSubs = S.users.filter(u => u.subscriptionStatus === "ACTIVE" || u.is_subscribed === true).length;
+  const emailSet = new Set();
+  const dedupedUsers = [];
+  for (const u of S.users) {
+    const em = (u.email || u.agentEmail || "").trim().toLowerCase();
+    const key = em || u.id;
+    if (!emailSet.has(key)) {
+      emailSet.add(key);
+      dedupedUsers.push(u);
+    }
+  }
+  const activeSubs = dedupedUsers.filter(u => u.subscriptionStatus === "ACTIVE" || u.is_subscribed === true).length;
   const totalRev = S.pay.filter(p => (p.status || "").toUpperCase() === "APPROVED").reduce((sum, p) => sum + (p.amount_iqd || p.amount || 10000), 0);
 
   $("#s-pending").textContent = pending;
-  $("#s-agents").textContent = S.users.length;
+  $("#s-agents").textContent = dedupedUsers.length;
   $("#s-active").textContent = activeSubs;
   $("#s-revenue").textContent = totalRev.toLocaleString("ar-IQ") + " د.ع";
 
@@ -1053,47 +865,110 @@ const KIND = {
   PAID: ["ACTIVE", "مشترك"], TRIAL: ["ADMIN", "تجريبي"], SUSPENDED: ["SUSPENDED", "مجمّد"],
   PAID_EXPIRED: ["EXPIRED", "اشتراك منتهي"], TRIAL_ENDED: ["EXPIRED", "انتهت التجربة"]
 };
+/* إحصائيات حقيقية لكل وكيل: عدد المشتركين وعدد اللوحات (من قاعدة البيانات مباشرة) */
+const AGENT_COUNTS = new Map(); // uid -> {subs, panels, at, err}
+const COUNT_TTL = 120000;
+async function countOf(uid, sub){
+  const r = await getCountFromServer(collection(db, C.USERS, uid, sub));
+  return r.data().count;
+}
+async function loadAgentCounts(ids){
+  const now = Date.now();
+  const todo = ids.filter(id => { const c = AGENT_COUNTS.get(id); return !c || (now - c.at > COUNT_TTL && !c.loading); });
+  if (!todo.length) return;
+  todo.forEach(id => AGENT_COUNTS.set(id, { ...(AGENT_COUNTS.get(id) || {}), loading: true, at: now }));
+  let i = 0;
+  const worker = async () => {
+    while (i < todo.length) {
+      const id = todo[i++];
+      try {
+        const [subs, panels] = await Promise.all([countOf(id, "subscribers"), countOf(id, "panels")]);
+        AGENT_COUNTS.set(id, { subs, panels, at: Date.now() });
+      } catch (e) {
+        AGENT_COUNTS.set(id, { err: true, at: Date.now() });
+      }
+    }
+  };
+  await Promise.all([worker(), worker(), worker(), worker()]);
+  if (!document.hidden) renderAgents();
+}
+function agentCountCell(u, field){
+  const ids = u._ids && u._ids.length ? u._ids : [u.id];
+  let total = 0;
+  for (const id of ids) {
+    const c = AGENT_COUNTS.get(id);
+    if (!c || c.loading) return `<span class="muted">…</span>`;
+    if (c.err) return `<span class="muted" title="تعذّر الجلب">؟</span>`;
+    total += c[field] || 0;
+  }
+  return `<b>${total}</b>`;
+}
+
 const leftColor = d => d <= 3 ? "var(--bad)" : d <= 7 ? "var(--warn)" : "var(--ok)";
 
 function renderAgents(){
   const q = ($("#agent-q").value || "").trim().toLowerCase();
 
-  // Deduplicate agents by uid or email to prevent duplicate rows for the same user
+  // Deduplicate agents by email to prevent duplicate rows for the same user
   const emailMap = new Map();
-  const uidMap = new Map();
-  const dedupedList = [];
-
   for (const u of S.users) {
     const em = (u.email || u.agentEmail || "").trim().toLowerCase();
-    const uid = (u.uid || u.id || "").trim();
-    const existing = (em && emailMap.get(em)) || (uid && uidMap.get(uid));
-    if (!existing) {
-      if (em) emailMap.set(em, u);
-      if (uid) uidMap.set(uid, u);
-      dedupedList.push(u);
+    const key = em || u.id;
+    if (!emailMap.has(key)) {
+      emailMap.set(key, [u]);
     } else {
-      if (!existing.subscriptionEndsAt && u.subscriptionEndsAt) existing.subscriptionEndsAt = u.subscriptionEndsAt;
-      if (!existing.subscription_expiry_timestamp && u.subscription_expiry_timestamp) existing.subscription_expiry_timestamp = u.subscription_expiry_timestamp;
-      if (!existing.subscriptionExpiryAt && u.subscriptionExpiryAt) existing.subscriptionExpiryAt = u.subscriptionExpiryAt;
-      if (existing.subscriptionStatus !== "ACTIVE" && (u.subscriptionStatus === "ACTIVE" || u.is_subscribed)) {
-        existing.subscriptionStatus = "ACTIVE";
-        existing.is_subscribed = true;
-      }
-      if (!existing.lastLoginAt && u.lastLoginAt) existing.lastLoginAt = u.lastLoginAt;
-      if (u.id && u.id !== existing.id) {
-        try {
-          deleteDoc(doc(db, C.USERS, u.id)).catch(() => {});
-        } catch (_) {}
-      }
+      emailMap.get(key).push(u);
     }
   }
 
+  const dedupedList = [];
+  for (const [em, docs] of emailMap.entries()) {
+    if (docs.length === 1) {
+      dedupedList.push(docs[0]);
+    } else {
+      // Sort: prefer doc with authentic name, lastLoginAt, active subscription
+      docs.sort((a, b) => {
+        const aName = (a.name || a.fullName || "").trim();
+        const bName = (b.name || b.fullName || "").trim();
+        const aHasGoodName = aName && aName !== "وكيل" ? 4 : 0;
+        const bHasGoodName = bName && bName !== "وكيل" ? 4 : 0;
+        const aHasLogin = a.lastLoginAt ? 2 : 0;
+        const bHasLogin = b.lastLoginAt ? 2 : 0;
+        const aActive = a.subscriptionStatus === "ACTIVE" || a.is_subscribed ? 1 : 0;
+        const bActive = b.subscriptionStatus === "ACTIVE" || b.is_subscribed ? 1 : 0;
+        return (bHasGoodName + bHasLogin + bActive) - (aHasGoodName + aHasLogin + aActive);
+      });
+
+      const primary = docs[0];
+      primary._ids = docs.map(d => d.id);
+      // Merge active subscription attributes if present in any of the duplicate docs
+      for (let i = 1; i < docs.length; i++) {
+        const other = docs[i];
+        if (!primary.subscriptionEndsAt && other.subscriptionEndsAt) primary.subscriptionEndsAt = other.subscriptionEndsAt;
+        if (!primary.subscription_expiry_timestamp && other.subscription_expiry_timestamp) primary.subscription_expiry_timestamp = other.subscription_expiry_timestamp;
+        if (!primary.subscriptionExpiryAt && other.subscriptionExpiryAt) primary.subscriptionExpiryAt = other.subscriptionExpiryAt;
+        if (!primary.is_subscribed && other.is_subscribed) primary.is_subscribed = other.is_subscribed;
+        if (primary.subscriptionStatus !== "ACTIVE" && other.subscriptionStatus === "ACTIVE") primary.subscriptionStatus = "ACTIVE";
+        if (!primary.lastLoginAt && other.lastLoginAt) primary.lastLoginAt = other.lastLoginAt;
+
+        // Clean up redundant duplicate doc in background
+        if (other.id && other.id !== primary.id) {
+          try {
+            deleteDoc(doc(db, C.USERS, other.id)).catch(() => {});
+          } catch (_) {}
+        }
+      }
+      dedupedList.push(primary);
+    }
+  }
+
+  loadAgentCounts([...new Set(dedupedList.flatMap(u => u._ids && u._ids.length ? u._ids : [u.id]))]);
   const list = dedupedList.filter(u => !q || (u.email || "").toLowerCase().includes(q) || (u.name || u.fullName || "").toLowerCase().includes(q));
   const c = $("#agent-list");
   if (!list.length) { c.innerHTML = `<div class="empty">لا يوجد وكلاء مطابقون</div>`; return; }
 
   c.innerHTML = `<table>
-    <thead><tr><th>الوكيل</th><th>نوع الحساب</th><th>المتبقي</th><th>ينتهي في</th><th>آخر دخول</th><th>الإجراءات</th></tr></thead>
+    <thead><tr><th>الوكيل</th><th>نوع الحساب</th><th>المشتركين</th><th>اللوحات</th><th>المتبقي</th><th>ينتهي في</th><th>آخر دخول</th><th>الإجراءات</th></tr></thead>
     <tbody>${list.map(u => {
       const email = u.email || "";
       const name = u.name || u.fullName || "وكيل";
@@ -1116,6 +991,8 @@ function renderAgents(){
       return `<tr>
         <td><b>${esc(name)}</b><div class="muted">${esc(email)}</div></td>
         <td><span class="tag t-${cls}">${label}</span></td>
+        <td>${agentCountCell(u, "subs")}</td>
+        <td>${agentCountCell(u, "panels")}</td>
         <td>${remain}</td>
         <td class="mono">${info.est && info.kind.startsWith("TRIAL") ? "≈ " : ""}${fmtMs(info.end)}</td>
         <td class="muted">${fmt(u.lastLoginAt)}</td>
@@ -1334,7 +1211,7 @@ async function approve(p){
     // Delete any duplicate documents in users collection for this email
     const emLower = email.toLowerCase().trim();
     if (emLower) {
-      const dupes = S.users.filter(u => (u.email || "").toLowerCase().trim() === emLower && u.id !== targetUid);
+      const dupes = S.users.filter(u => (u.email || u.agentEmail || "").toLowerCase().trim() === emLower && u.id !== targetUid);
       dupes.forEach(d => {
         b.delete(doc(db, C.USERS, d.id));
       });
@@ -1519,7 +1396,7 @@ try {
     closeAdminModal();
   } catch (err) {
     console.error("Admin save error:", err);
-    toast(translateAuthError(err, "حدث خطأ أثناء حفظ المشرف"), true);
+    toast(err.message || "حدث خطأ أثناء حفظ المشرف", true);
   } finally {
     btn.disabled = false;
     btn.textContent = "حفظ المشرف";
