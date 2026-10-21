@@ -70,15 +70,77 @@ setInterval(() => {
 }, 1000);
 
 // ==========================================
-// AUTHENTICATION CONTROLLER
+// AUTHENTICATION & 5-MINUTE IDLE TIMEOUT CONTROLLER
 // ==========================================
+const ADMIN_IDLE_TIMEOUT_MS = 5 * 60 * 1000;
+const ADMIN_SESSION_KEY = "netflow_admin_session_active";
+const ADMIN_LAST_ACTIVE_KEY = "netflow_admin_last_active_ts";
+let lastAdminActiveTs = Number(localStorage.getItem(ADMIN_LAST_ACTIVE_KEY) || 0);
+
+function recordAdminActivity(force = false) {
+  const now = Date.now();
+  if (force || now - lastAdminActiveTs > 2000) {
+    lastAdminActiveTs = now;
+    try {
+      localStorage.setItem(ADMIN_LAST_ACTIVE_KEY, String(now));
+      sessionStorage.setItem(ADMIN_SESSION_KEY, "1");
+    } catch (_) {}
+  }
+}
+
+function clearAdminSession() {
+  lastAdminActiveTs = 0;
+  try {
+    localStorage.removeItem(ADMIN_LAST_ACTIVE_KEY);
+    sessionStorage.removeItem(ADMIN_SESSION_KEY);
+  } catch (_) {}
+}
+
+function isIdleSessionExpired() {
+  try {
+    const activeTab = sessionStorage.getItem(ADMIN_SESSION_KEY) === "1";
+    const ts = Number(localStorage.getItem(ADMIN_LAST_ACTIVE_KEY) || 0);
+    if (!activeTab || !ts) return true;
+    return (Date.now() - ts) >= ADMIN_IDLE_TIMEOUT_MS;
+  } catch (_) {
+    return false;
+  }
+}
+
+["mousemove", "mousedown", "keydown", "touchstart", "scroll", "click"].forEach(evt => {
+  window.addEventListener(evt, () => {
+    if (currentAdminUser) recordAdminActivity(false);
+  }, { passive: true });
+});
+
+setInterval(() => {
+  if (!currentAdminUser) return;
+  const ts = Number(localStorage.getItem(ADMIN_LAST_ACTIVE_KEY) || lastAdminActiveTs || 0);
+  if (!ts || (Date.now() - ts) >= ADMIN_IDLE_TIMEOUT_MS) {
+    clearAdminSession();
+    currentAdminUser = null;
+    showLoginAlert("تم إغلاق الجلسة تلقائياً لعدم النشاط لمدة 5 دقائق. يرجى تسجيل الدخول مجدداً.", "error");
+    auth.signOut();
+  }
+}, 5000);
+
 auth.onAuthStateChanged((user) => {
   const loginSection = document.getElementById('loginSection');
   const dashboardSection = document.getElementById('dashboardSection');
 
   if (user) {
+    if (isIdleSessionExpired()) {
+      clearAdminSession();
+      currentAdminUser = null;
+      auth.signOut();
+      loginSection.classList.remove('hidden');
+      dashboardSection.classList.add('hidden');
+      return;
+    }
+
     const email = (user.email || '').trim().toLowerCase();
     if (email !== SUPER_ADMIN_EMAIL.toLowerCase()) {
+      clearAdminSession();
       auth.signOut();
       showLoginAlert("عذراً، هذا الحساب غير مصرح له بالدخول للوحة تحكم الإدارة.", "error");
       loginSection.classList.remove('hidden');
@@ -87,6 +149,7 @@ auth.onAuthStateChanged((user) => {
     }
 
     // Admin verified
+    recordAdminActivity(true);
     currentAdminUser = user;
     document.getElementById('sidebarAdminEmail').innerText = user.email;
     loginSection.classList.add('hidden');
@@ -127,12 +190,21 @@ async function handleLogin() {
   loginBtn.disabled = true;
 
   try {
+    recordAdminActivity(true);
     await auth.signInWithEmailAndPassword(email, password);
+    recordAdminActivity(true);
   } catch (err) {
+    clearAdminSession();
     console.error("Login failed:", err);
-    let msg = "فشل تسجيل الدخول. يرجى التحقق من صحة البريد وكلمة المرور.";
-    if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-      msg = "بيانات الدخول غير صحيحة، يرجى إعادة المحاولة.";
+    let msg = "البريد الإلكتروني أو الرمز السري (كلمة المرور) غير صحيح، يرجى التأكد والمحاولة مرة أخرى.";
+    if (err.code === 'auth/invalid-email') {
+      msg = "صيغة البريد الإلكتروني غير صحيحة.";
+    } else if (err.code === 'auth/user-not-found') {
+      msg = "البريد الإلكتروني غير مسجل.";
+    } else if (err.code === 'auth/wrong-password') {
+      msg = "الرمز السري (كلمة المرور) غير صحيح.";
+    } else if (err.code === 'auth/user-disabled') {
+      msg = "تم تعطيل هذا الحساب.";
     } else if (err.code === 'auth/too-many-requests') {
       msg = "تم حظر المحاولات مؤقتاً بسبب كثرة المحاولات الخاطئة. انتظر قليلاً.";
     }
@@ -146,6 +218,7 @@ async function handleLogin() {
 
 function handleSignOut() {
   if (confirm("هل ترغب بالفعل في تسجيل الخروج من لوحة الإدارة المركزية؟")) {
+    clearAdminSession();
     auth.signOut();
   }
 }
