@@ -759,8 +759,8 @@ function renderOverview(){
         const amt = (p.amount_iqd || p.amount || 10000).toLocaleString("ar-IQ") + " د.ع";
         const tx = p.transactionId || p.transaction_id || "—";
         const email = p.agentEmail || p.email || "";
-        const approveBtn = can("approve_payments") ? `<button class="btn ok sm" data-act="approve" data-id="${p.id}">قبول</button>` : '';
-        const rejectBtn = can("reject_payments") ? `<button class="btn bad sm" data-act="reject" data-id="${p.id}">رفض</button>` : '';
+        const approveBtn = can("approve_payments") ? `<button class="btn ok sm" data-act="approve" data-id="${esc(p.id)}">قبول</button>` : '';
+        const rejectBtn = can("reject_payments") ? `<button class="btn bad sm" data-act="reject" data-id="${esc(p.id)}">رفض</button>` : '';
         return `<tr>
           <td><b>${esc(email)}</b></td>
           <td>${esc(plan)}</td>
@@ -818,12 +818,12 @@ function renderPayments(){
       const method = (p.payment_method || p.paymentMethod || "").toUpperCase() === "ZAIN_CASH" ? "زين كاش" : "حساب QI";
       const tx = p.transactionId || p.transaction_id || "—";
       const receipt = p.receipt_url || p.receiptUrl || p.receiptImage;
-      const receiptBtn = receipt ? `<button class="btn sm" data-act="receipt" data-id="${p.id}">معاينة 📎</button>` : `<span class="muted">بدون</span>`;
+      const receiptBtn = receipt ? `<button class="btn sm" data-act="receipt" data-id="${esc(p.id)}">معاينة 📎</button>` : `<span class="muted">بدون</span>`;
       const st = (p.status || "PENDING").toUpperCase();
       const isPending = st === "PENDING";
 
-      const approveBtn = (isPending && can("approve_payments")) ? `<button class="btn ok sm" data-act="approve" data-id="${p.id}">✅ قبول</button>` : '';
-      const rejectBtn = (isPending && can("reject_payments")) ? `<button class="btn bad sm" data-act="reject" data-id="${p.id}">❌ رفض</button>` : '';
+      const approveBtn = (isPending && can("approve_payments")) ? `<button class="btn ok sm" data-act="approve" data-id="${esc(p.id)}">✅ قبول</button>` : '';
+      const rejectBtn = (isPending && can("reject_payments")) ? `<button class="btn bad sm" data-act="reject" data-id="${esc(p.id)}">❌ رفض</button>` : '';
 
       return `<tr>
         <td><b>${esc(email)}</b></td>
@@ -1033,9 +1033,9 @@ function renderAdmins(){
         return `<span class="perm-badge ${has ? "has" : ""}">${PERM_LABELS[k]} ${has ? "✓" : "✗"}</span>`;
       }).join("");
 
-      const toggleBtn = `<button class="btn sm ${isActive ? "bad" : "ok"}" data-act="toggle-admin" data-id="${a.id}">${isActive ? "تعطيل" : "تفعيل"}</button>`;
-      const editBtn = `<button class="btn sm" data-act="edit-admin" data-id="${a.id}">✏️ تعديل الصلاحيات</button>`;
-      const delBtn = `<button class="btn sm bad" data-act="delete-admin" data-id="${a.id}">🗑️ حذف</button>`;
+      const toggleBtn = `<button class="btn sm ${isActive ? "bad" : "ok"}" data-act="toggle-admin" data-id="${esc(a.id)}">${isActive ? "تعطيل" : "تفعيل"}</button>`;
+      const editBtn = `<button class="btn sm" data-act="edit-admin" data-id="${esc(a.id)}">✏️ تعديل الصلاحيات</button>`;
+      const delBtn = `<button class="btn sm bad" data-act="delete-admin" data-id="${esc(a.id)}">🗑️ حذف</button>`;
 
       return `<tr>
         <td>
@@ -1624,6 +1624,6 @@ $("#edit-agent-form").onsubmit = async e => {
   btn.disabled = false;
 };
 </script>
-     <script src="ui.js"></script>
+<script src="ui.js"></script>
 </body>
 </html>
