@@ -178,7 +178,7 @@ label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px;font-wei
           <button class="btn" data-f="REJECTED">مرفوضة</button>
           <button class="btn" data-f="ALL">الكل</button>
         </div>
-        <input id="pay-q" placeholder="بحث برقم الحوالة أو البريد">
+        <input id="pay-q" placeholder="بحث برقم الحوالة أو الرمز (NF-…) أو البريد">
       </div>
       <div class="card"><div class="card-b wrap" id="pay-list"></div></div>
     </section>
@@ -695,6 +695,7 @@ function listen(){
     })
   );
 
+  loadPrices();
   sub(C.PAY, "submittedAt", 500, "pay");
   sub(C.USERS, "createdAt", 1000, "users");
   sub(C.AUDIT, "at", 500, "audit");
@@ -791,6 +792,33 @@ function renderOverview(){
 }
 
 /* 2. PAYMENTS */
+// أسعار الباقات المتوقعة: من app_config/plans (نفس مستند التطبيق)، والافتراضي إذا ما موجود
+const PRICES = { MONTHLY: 10000, SEMI_ANNUAL: 25000, ANNUAL: 50000 };
+let pricesLoaded = false;
+async function loadPrices(){
+  if (pricesLoaded) return;
+  pricesLoaded = true;
+  try {
+    const d = await getDoc(doc(db, "app_config", "plans"));
+    if (d.exists()) {
+      const x = d.data();
+      const ok = v => Number.isFinite(v) && v >= 1000 && v <= 5000000;
+      if (ok(x.monthly_price)) PRICES.MONTHLY = x.monthly_price;
+      if (ok(x.semi_annual_price)) PRICES.SEMI_ANNUAL = x.semi_annual_price;
+      if (ok(x.annual_price)) PRICES.ANNUAL = x.annual_price;
+      renderPayments();
+    }
+  } catch (e) { console.warn("plans config not loaded:", e); }
+}
+const planOf = p => String(p.plan_type || p.planType || "MONTHLY").toUpperCase();
+const txKey = p => String(p.transactionId || p.transaction_id || "").replace(/\s+/g, "").toUpperCase();
+// طلبات ثانية بنفس رقم الحوالة (حوالة وحدة انستخدمت لأكثر من طلب)
+const txDupes = p => {
+  const k = txKey(p);
+  if (!k) return [];
+  return S.pay.filter(x => x.id !== p.id && txKey(x) === k && (x.status || "PENDING").toUpperCase() !== "CANCELLED");
+};
+
 function renderPayments(){
   const q = ($("#pay-q").value || "").trim().toLowerCase();
   const f = S.filter;
@@ -800,7 +828,8 @@ function renderPayments(){
     if (!q) return true;
     const email = (p.agentEmail || p.email || "").toLowerCase();
     const tx = (p.transactionId || p.transaction_id || "").toLowerCase();
-    return email.includes(q) || tx.includes(q);
+    const ref = (p.ref_code || p.refCode || "").toLowerCase();
+    return email.includes(q) || tx.includes(q) || ref.includes(q);
   });
 
   const c = $("#pay-list");
@@ -813,14 +842,27 @@ function renderPayments(){
     <thead><tr><th>الوكيل</th><th>الباقة</th><th>المبلغ</th><th>طريقة الدفع</th><th>رقم الحوالة</th><th>الوصل</th><th>الوقت</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
     <tbody>${list.map(p => {
       const email = p.agentEmail || p.email || "";
-      const plan = p.plan_type || p.planType || "MONTHLY";
-      const amt = (p.amount_iqd || p.amount || (plan==="ANNUAL"?50000:plan==="SEMI_ANNUAL"?25000:10000)).toLocaleString("ar-IQ") + " د.ع";
-      const method = (p.payment_method || p.paymentMethod || "").toUpperCase() === "ZAIN_CASH" ? "زين كاش" : "حساب QI";
-      const tx = p.transactionId || p.transaction_id || "—";
-      const receipt = p.receipt_url || p.receiptUrl || p.receiptImage;
-      const receiptBtn = receipt ? `<button class="btn sm" data-act="receipt" data-id="${esc(p.id)}">معاينة 📎</button>` : `<span class="muted">بدون</span>`;
+      const plan = planOf(p);
       const st = (p.status || "PENDING").toUpperCase();
       const isPending = st === "PENDING";
+      const expected = PRICES[plan] || PRICES.MONTHLY;
+      const claimed = Number(p.amount_iqd || p.amount || 0);
+      // للطلب المعلق نعرض السعر المطلوب فعلاً للباقة (مو الرقم اللي كتبه التطبيق)، ونحذّر إذا الطلب يدّعي غيره
+      const shown = isPending ? expected : (claimed || expected);
+      const amt = shown.toLocaleString("ar-IQ") + " د.ع";
+      const claimWarn = (isPending && claimed && claimed !== expected)
+        ? `<div class="muted" style="color:var(--warn);font-size:11px">⚠ الطلب يدّعي ${claimed.toLocaleString("ar-IQ")}</div>` : "";
+      const method = (p.payment_method || p.paymentMethod || "").toUpperCase() === "ZAIN_CASH" ? "زين كاش" : "حساب QI";
+      const tx = p.transactionId || p.transaction_id || "—";
+      const ref = p.ref_code || p.refCode || "";
+      const disc = p.discount_code || p.discountCode || "";
+      const dupes = txDupes(p);
+      const dupApproved = dupes.some(d => (d.status || "").toUpperCase() === "APPROVED");
+      const dupTitle = esc(dupes.map(d => `${d.agentEmail || d.email || "؟"} (${LBL[(d.status || "PENDING").toUpperCase()] || d.status})`).join("، "));
+      const dupBadge = dupes.length
+        ? `<div><span class="tag t-REJECTED" title="${dupTitle}">⚠ ${dupApproved ? "استُخدم قبلاً وانقبل" : "رقم مكرر"} (${dupes.length})</span></div>` : "";
+      const receipt = p.receipt_url || p.receiptUrl || p.receiptImage;
+      const receiptBtn = receipt ? `<button class="btn sm" data-act="receipt" data-id="${esc(p.id)}">معاينة 📎</button>` : `<span class="muted">بدون</span>`;
 
       const approveBtn = (isPending && can("approve_payments")) ? `<button class="btn ok sm" data-act="approve" data-id="${esc(p.id)}">✅ قبول</button>` : '';
       const rejectBtn = (isPending && can("reject_payments")) ? `<button class="btn bad sm" data-act="reject" data-id="${esc(p.id)}">❌ رفض</button>` : '';
@@ -828,9 +870,9 @@ function renderPayments(){
       return `<tr>
         <td><b>${esc(email)}</b></td>
         <td>${tag(plan)}</td>
-        <td class="mono" style="color:var(--ok);font-weight:700">${amt}</td>
+        <td class="mono" style="color:var(--ok);font-weight:700">${amt}${claimWarn}</td>
         <td>${esc(method)}</td>
-        <td class="mono" style="font-weight:700;color:var(--accent)">${esc(tx)}</td>
+        <td class="mono" style="font-weight:700;color:var(--accent)">${esc(tx)}${dupBadge}${ref ? `<div class="muted" style="font-weight:600">رمز: ${esc(ref)}</div>` : ""}${disc ? `<div class="muted">🏷️ كود: ${esc(disc)}</div>` : ""}</td>
         <td>${receiptBtn}</td>
         <td class="muted">${fmt(p.submittedAt || p.createdAt || p.created_at)}</td>
         <td>${tag(st)}</td>
@@ -1169,11 +1211,22 @@ async function approve(p){
   const planLabel = plan === "ANNUAL" ? "السنوي" : plan === "SEMI_ANNUAL" ? "6 أشهر" : "الشهري";
   const days = plan === "ANNUAL" ? 365 : plan === "SEMI_ANNUAL" ? 180 : 30;
 
-  if (!confirm(`هل أنت متأكد من تفعيل اشتراك (${email}) لباقة ${planLabel} لمدة ${days} يوماً؟`)) return;
-
   const targetUid = p.agentUid || p.uid;
   const nowMs = Date.now();
-  const expiryMs = nowMs + (days * 864e5);
+  // التجديد المبكر: الأيام المتبقية ما تضيع، تنضاف فوق الباقة الجديدة
+  const emKey = email.toLowerCase().trim();
+  const mates = S.users.filter(u => u.id === targetUid || (emKey && (u.email || u.agentEmail || "").toLowerCase().trim() === emKey));
+  const curEnd = Math.max(0, ...mates.map(u => msOf(u.subscriptionEndsAt) || msOf(u.subscription_expiry_timestamp) || msOf(u.subscriptionExpiryAt)));
+  const baseMs = curEnd > nowMs ? curEnd : nowMs;
+  const carried = baseMs > nowMs ? Math.ceil((baseMs - nowMs) / 864e5) : 0;
+  const expiryMs = baseMs + (days * 864e5);
+
+  const dupes = txDupes(p);
+  let msg = `هل أنت متأكد من تفعيل اشتراك (${email}) لباقة ${planLabel} لمدة ${days} يوماً؟`;
+  if (carried > 0) msg += `\n\nعنده ${carried} يوم متبقي، تنضاف فوق المدة (المجموع ${days + carried} يوم).`;
+  if (dupes.length) msg += `\n\n⚠ تنبيه: رقم الحوالة هذا مستخدم بطلب آخر (${dupes.map(d => d.agentEmail || d.email || "؟").join("، ")}). تأكد من المحفظة قبل ما تقبل.`;
+  if (!confirm(msg)) return;
+
   const expiryTs = Timestamp.fromDate(new Date(expiryMs));
 
   const b = writeBatch(db);
@@ -1218,9 +1271,9 @@ async function approve(p){
     }
   }
 
-  logTo(b, "SUBSCRIPTION_ACTIVATED", `تفعيل باقة ${planLabel} (${days} يوم) لحساب ${email} (حوالة ${txId})`, email);
+  logTo(b, "SUBSCRIPTION_ACTIVATED", `تفعيل باقة ${planLabel} (${days} يوم${carried ? ` + ${carried} متبقية` : ""}) لحساب ${email} (حوالة ${txId})`, email);
   await b.commit();
-  toast(`تم تفعيل باقة ${planLabel} بنجاح (${days} يوماً)`);
+  toast(`تم تفعيل باقة ${planLabel} بنجاح (${days + carried} يوماً)`);
 }
 
 async function reject(){
