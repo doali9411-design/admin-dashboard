@@ -9,94 +9,141 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0b0f19;--panel:#111827;--panel2:#1f2937;--line:#374151;
-  --text:#f9fafb;--muted:#9ca3af;--accent:#06b6d4;--accent2:#3b82f6;--ink:#0b0f19;
-  --ok:#10b981;--warn:#f59e0b;--bad:#ef4444;
+  --bg:#0a0e16;--bg-grad:radial-gradient(1200px 800px at 15% -10%,#1a1f3a 0%,#0a0e16 55%);
+  --panel:#121728;--panel2:#1b2138;--panel3:#232a45;--line:#2a3150;--line2:#343c60;
+  --text:#f3f5fb;--muted:#8b93ab;--muted2:#5d6480;
+  --accent:#6366f1;--accent2:#14b8a6;--accentc:rgba(99,102,241,.16);
+  --ink:#ffffff;
+  --ok:#22c55e;--okc:rgba(34,197,94,.14);
+  --warn:#f59e0b;--warnc:rgba(245,158,11,.14);
+  --bad:#f43f5e;--badc:rgba(244,63,94,.14);
+  --radius:14px;--shadow:0 10px 30px rgba(0,0,0,.35);
+}
+:root[data-theme="light"]{
+  --bg:#f2f4fb;--bg-grad:radial-gradient(1200px 800px at 15% -10%,#e6e9fb 0%,#f2f4fb 55%);
+  --panel:#ffffff;--panel2:#f6f7fc;--panel3:#eef0fa;--line:#e2e5f3;--line2:#d4d8ee;
+  --text:#121626;--muted:#6b7290;--muted2:#9298b2;
+  --accent:#6366f1;--accent2:#0d9488;--accentc:rgba(99,102,241,.1);
+  --ink:#ffffff;
+  --ok:#16a34a;--okc:rgba(22,163,74,.1);
+  --warn:#d97706;--warnc:rgba(217,119,6,.1);
+  --bad:#e11d48;--badc:rgba(225,29,72,.1);
+  --shadow:0 10px 30px rgba(30,41,90,.1);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:'Cairo',system-ui,sans-serif;min-height:100vh}
+body{background:var(--bg) var(--bg-grad);color:var(--text);font-family:'Cairo',system-ui,sans-serif;min-height:100vh;transition:background-color .2s,color .2s}
 .hidden{display:none!important}
 #login{min-height:100vh;display:grid;place-items:center;padding:20px}
-.login-box{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:36px;width:100%;max-width:400px;box-shadow:0 20px 40px rgba(0,0,0,.5)}
+.login-box{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:38px;width:100%;max-width:400px;box-shadow:var(--shadow)}
 .login-box h1{font-size:22px;text-align:center}
 .login-box p{color:var(--muted);text-align:center;margin-bottom:12px}
 #login-err{color:var(--bad);margin-top:12px;min-height:22px;font-size:14px;text-align:center}
-#app{display:grid;grid-template-columns:250px 1fr;min-height:100%}
-aside{background:var(--panel);border-inline-end:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh;overflow-y:auto}
-.brand{font-weight:700;font-size:17px;padding:4px 10px 16px}
-.brand small{display:block;color:var(--muted);font-weight:400;font-size:12px}
-.nav{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:8px;background:none;border:0;cursor:pointer;color:var(--muted);text-align:start;width:100%;font-family:inherit;font-size:14px}
-.nav:hover,.nav.active{background:var(--panel2);color:var(--text)}
-.nav.active{box-shadow:inset -3px 0 0 var(--accent)}
+#app{display:grid;grid-template-columns:260px 1fr;min-height:100%}
+aside{background:var(--panel);border-inline-end:1px solid var(--line);padding:22px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.brand{font-weight:800;font-size:18px;padding:4px 10px 20px;display:flex;align-items:center;gap:10px}
+.brand .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:17px;flex:none;box-shadow:0 6px 16px rgba(99,102,241,.4)}
+.brand small{display:block;color:var(--muted);font-weight:500;font-size:11.5px;margin-top:1px}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px;border-radius:10px;background:none;border:0;cursor:pointer;color:var(--muted);text-align:start;width:100%;font-family:inherit;font-size:14px;font-weight:500;transition:background .15s,color .15s}
+.nav:hover{background:var(--panel2);color:var(--text)}
+.nav.active{background:var(--accentc);color:var(--accent);font-weight:700}
 .badge-n{background:var(--warn);color:#2a1d00;border-radius:99px;font-size:12px;font-weight:700;padding:0 8px;min-width:22px;text-align:center}
-.badge-n.zero{background:var(--line);color:var(--muted)}
-.me{margin-top:auto;border-top:1px solid var(--line);padding:14px 10px 0;font-size:13px;color:var(--muted);word-break:break-all}
-.me b{display:block;color:var(--text);font-weight:600}
-main{padding:28px 32px;max-width:1240px;width:100%}
-header.top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:22px;flex-wrap:wrap}
-header.top h2{font-size:24px;line-height:1.3}
-header.top p{color:var(--muted);font-size:14px}
+.badge-n.zero{background:var(--panel3);color:var(--muted2)}
+.me{margin-top:auto;border-top:1px solid var(--line);padding:16px 10px 0;font-size:13px;color:var(--muted);word-break:break-all}
+.me b{display:block;color:var(--text);font-weight:700}
+.me-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#theme-toggle{background:var(--panel3);border:1px solid var(--line);border-radius:8px;width:30px;height:30px;flex:none;cursor:pointer;font-size:14px;color:var(--text)}
+main{padding:30px 34px;max-width:1280px;width:100%}
+header.top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+header.top h2{font-size:25px;line-height:1.3;font-weight:800}
+header.top p{color:var(--muted);font-size:14px;margin-top:2px}
 .status{display:flex;gap:14px;align-items:center;font-size:13px;color:var(--muted)}
-.live{color:var(--ok);display:flex;align-items:center;gap:6px}
-.live::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok)}
-.live.off{color:var(--bad)}.live.off::before{background:var(--bad)}
-.btn{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer;color:var(--text);font-family:inherit;font-size:13.5px}
-.btn:hover{border-color:var(--muted)}
-.btn.primary{background:var(--accent);color:var(--ink);border-color:var(--accent);font-weight:700}
-.btn.ok{background:rgba(16,185,129,.14);border-color:rgba(16,185,129,.4);color:var(--ok);font-weight:600}
-.btn.bad{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.4);color:var(--bad);font-weight:600}
-.btn.sm{padding:4px 10px;font-size:12.5px}
+.live{color:var(--ok);display:flex;align-items:center;gap:6px;font-weight:600}
+.live::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px var(--okc)}
+.live.off{color:var(--bad)}.live.off::before{background:var(--bad);box-shadow:0 0 0 3px var(--badc)}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 15px;cursor:pointer;color:var(--text);font-family:inherit;font-size:13.5px;font-weight:600;transition:border-color .15s,transform .1s}
+.btn:hover{border-color:var(--line2)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:linear-gradient(135deg,var(--accent),#818cf8);color:#fff;border-color:transparent;font-weight:700;box-shadow:0 6px 16px rgba(99,102,241,.35)}
+.btn.ok{background:var(--okc);border-color:rgba(34,197,94,.35);color:var(--ok);font-weight:700}
+.btn.bad{background:var(--badc);border-color:rgba(244,63,94,.35);color:var(--bad);font-weight:700}
+.btn.sm{padding:5px 11px;font-size:12.5px;border-radius:8px}
 .btn:disabled{opacity:.5;cursor:not-allowed}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:14px}
-.card-h{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line);gap:10px}
-.card-h h3{font-size:16px}
-.card-b{padding:6px 20px 14px}
-.pad{padding:14px 20px 20px}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
-.stat{padding:14px 18px}
-.stat span{color:var(--muted);font-size:13px}
-.stat b{display:block;font-size:24px;font-weight:700;line-height:1.3}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:14px}
+.card-h{display:flex;justify-content:space-between;align-items:center;padding:17px 20px;border-bottom:1px solid var(--line);gap:10px}
+.card-h h3{font-size:15.5px;font-weight:700}
+.card-b{padding:6px 20px 16px}
+.pad{padding:16px 20px 22px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat{padding:16px 18px;display:flex;align-items:center;gap:14px;border-inline-start:3px solid var(--accent)}
+.stat .ico{width:40px;height:40px;border-radius:11px;background:var(--accentc);display:flex;align-items:center;justify-content:center;font-size:19px;flex:none}
+.stat span{color:var(--muted);font-size:12.5px;font-weight:600}
+.stat b{display:block;font-size:25px;font-weight:800;line-height:1.35}
+.stat.warn{border-inline-start-color:var(--warn)}
+.stat.warn .ico{background:var(--warnc)}
 .stat.warn b{color:var(--warn)}
+.stat.ok{border-inline-start-color:var(--ok)}
+.stat.ok .ico{background:var(--okc)}
+.stat.money{border-inline-start-color:var(--accent2)}
+.stat.money .ico{background:rgba(20,184,166,.14)}
 .grid2{display:grid;grid-template-columns:3fr 2fr;gap:16px;align-items:start}
-.empty{color:var(--muted);text-align:center;padding:28px 8px}
+.empty{color:var(--muted);text-align:center;padding:30px 8px;font-size:13.5px}
 table{width:100%;border-collapse:collapse}
-th{color:var(--muted);font-weight:600;font-size:13px;text-align:start;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
-td{padding:11px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{color:var(--muted);font-weight:700;font-size:12.5px;text-align:start;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:12px 8px;border-bottom:1px solid var(--line);vertical-align:middle;font-size:13.5px}
 tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--panel2)}
 .wrap{overflow-x:auto}
-.tag{display:inline-block;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600;white-space:nowrap}
-.t-PENDING{background:rgba(245,158,11,.15);color:var(--warn)}
-.t-APPROVED,.t-ACTIVE{background:rgba(16,185,129,.14);color:var(--ok)}
-.t-REJECTED,.t-EXPIRED,.t-SUSPENDED,.t-HIGH{background:rgba(239,68,68,.13);color:var(--bad)}
-.t-ADMIN{background:rgba(6,182,212,.15);color:var(--accent)}
-.t-AGENT,.t-NORMAL{background:var(--panel2);color:var(--muted)}
-.mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;direction:ltr;unicode-bidi:embed;font-size:13px}
+.tag{display:inline-block;border-radius:7px;padding:3px 9px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.t-PENDING{background:var(--warnc);color:var(--warn)}
+.t-APPROVED,.t-ACTIVE{background:var(--okc);color:var(--ok)}
+.t-REJECTED,.t-EXPIRED,.t-SUSPENDED,.t-HIGH{background:var(--badc);color:var(--bad)}
+.t-ADMIN{background:var(--accentc);color:var(--accent)}
+.t-AGENT,.t-NORMAL{background:var(--panel3);color:var(--muted)}
+.mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;direction:ltr;unicode-bidi:embed;font-size:12.5px}
 .muted{color:var(--muted);font-size:13px}
 .row-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .bar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
-.tabs{display:flex;gap:6px;flex-wrap:wrap}
-.tabs .btn.on{background:var(--accent);color:var(--ink);border-color:var(--accent);font-weight:700}
-input,textarea,select{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 12px;width:100%;color:var(--text);font-family:inherit}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;background:var(--panel2);padding:4px;border-radius:11px}
+.tabs .btn{background:none;border:0}
+.tabs .btn.on{background:var(--panel);color:var(--accent);font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+input,textarea,select{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 12px;width:100%;color:var(--text);font-family:inherit;font-size:13.5px}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--accentc);border-color:var(--accent)}
 .bar input,.bar select{max-width:320px}
-label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px;font-weight:500}
+label{display:block;margin:12px 0 5px;color:var(--muted);font-size:12.5px;font-weight:600}
 .f2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.log{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.log{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
 .log:last-child{border:0}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:9px;flex:none}
-.sw{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:14px}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-top:14px}
 .sw input{width:20px;height:20px;accent-color:var(--bad)}
-.modal{position:fixed;inset:0;background:rgba(3,7,15,.75);display:grid;place-items:center;padding:20px;z-index:30}
-.modal .box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto}
+.modal{position:fixed;inset:0;background:rgba(5,8,16,.7);backdrop-filter:blur(2px);display:grid;place-items:center;padding:20px;z-index:30}
+.modal .box{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow)}
 .perm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
-.perm-item{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12.5px;cursor:pointer}
+.perm-item{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 10px;font-size:12.5px;cursor:pointer}
 .perm-item:hover{border-color:var(--accent)}
 .perm-item input{width:16px;height:16px;accent-color:var(--accent);margin:0}
-.perm-badge{display:inline-block;padding:2px 7px;border-radius:5px;font-size:11px;background:var(--panel2);border:1px solid var(--line);margin:2px 2px;color:var(--muted)}
-.perm-badge.has{background:rgba(6,182,212,.12);border-color:rgba(6,182,212,.3);color:var(--accent);font-weight:600}
+.perm-badge{display:inline-block;padding:2px 7px;border-radius:5px;font-size:11px;background:var(--panel3);border:1px solid var(--line);margin:2px 2px;color:var(--muted)}
+.perm-badge.has{background:var(--accentc);border-color:rgba(99,102,241,.3);color:var(--accent);font-weight:600}
 .presets{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}
-#toast{position:fixed;bottom:24px;left:24px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 18px;font-size:13.5px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:40}
+#toast{position:fixed;bottom:24px;left:24px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px 18px;font-size:13.5px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:40;box-shadow:var(--shadow)}
 #toast.show{opacity:1}
 #toast.err{border-color:var(--bad);color:var(--bad)}
+/* مركز التحكم والصيانة */
+.danger-card{border-color:var(--line)}
+.danger-card.active{border-color:var(--bad);box-shadow:0 0 0 1px var(--bad) inset}
+.btn.notif-on{color:var(--ok);border-color:var(--ok)}
+.switch-row{display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.switch-row b{font-size:14.5px}
+.switch{position:relative;width:48px;height:27px;flex:none}
+.switch input{opacity:0;width:0;height:0}
+.switch .slider{position:absolute;inset:0;background:var(--line2);border-radius:99px;cursor:pointer;transition:.2s}
+.switch .slider::before{content:"";position:absolute;width:21px;height:21px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.switch input:checked + .slider{background:var(--bad)}
+.switch input:checked + .slider::before{transform:translateX(21px)}
+:root[dir="rtl"] .switch input:checked + .slider::before{transform:translateX(-21px)}
+.mini-agent-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.mini-agent-row:last-child{border-bottom:0}
+.suggestion{background:var(--accentc);border:1px solid rgba(99,102,241,.3);border-radius:12px;padding:12px 14px;font-size:13px;color:var(--text);margin-top:10px}
 @media(max-width:860px){
   #app{grid-template-columns:1fr}
   aside{height:auto;position:static}
@@ -104,7 +151,6 @@ label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px;font-wei
   .f2,.perm-grid{grid-template-columns:1fr}
 }
 </style>
-     <link rel="stylesheet" href="theme.css">
 </head>
 <body>
 
@@ -128,17 +174,21 @@ label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px;font-wei
 
 <div id="app" class="hidden">
   <aside>
-    <div class="brand">إدارة المنظومة<small>NetFlow Control Hub</small></div>
-    <button class="nav active" data-view="overview">نظرة عامة</button>
-    <button class="nav" data-view="payments" id="nav-btn-payments">طلبات التفعيل <span class="badge-n zero" id="nav-pending">0</span></button>
-    <button class="nav" data-view="agents" id="nav-btn-agents">الوكلاء <span class="badge-n zero" id="nav-agents">0</span></button>
-    <button class="nav" data-view="admins" id="nav-btn-admins">المشرفون والصلاحيات <span class="badge-n zero" id="nav-admins">0</span></button>
-    <button class="nav" data-view="broadcast" id="nav-btn-broadcast">الإشعارات</button>
-    <button class="nav" data-view="audit" id="nav-btn-audit">سجل العمليات</button>
-    <button class="nav" data-view="version" id="nav-btn-version">الإصدارات والتحديث <span class="muted" id="nav-ver"></span></button>
+    <div class="brand"><span class="logo">⚡</span><span>إدارة المنظومة<small>NetFlow Control Hub</small></span></div>
+    <button class="nav active" data-view="overview">📊 نظرة عامة</button>
+    <button class="nav" data-view="payments" id="nav-btn-payments">💳 طلبات التفعيل <span class="badge-n zero" id="nav-pending">0</span></button>
+    <button class="nav" data-view="agents" id="nav-btn-agents">👥 الوكلاء <span class="badge-n zero" id="nav-agents">0</span></button>
+    <button class="nav" data-view="admins" id="nav-btn-admins">🛡️ المشرفون والصلاحيات <span class="badge-n zero" id="nav-admins">0</span></button>
+    <button class="nav" data-view="control" id="nav-btn-control">🔧 التحكم والصيانة</button>
+    <button class="nav" data-view="cards" id="nav-btn-cards">🎫 كرتات التفعيل</button>
+    <button class="nav" data-view="broadcast" id="nav-btn-broadcast">📢 الإشعارات</button>
+    <button class="nav" data-view="audit" id="nav-btn-audit">🧾 سجل العمليات</button>
+    <button class="nav" data-view="version" id="nav-btn-version">🚀 الإصدارات والتحديث <span class="muted" id="nav-ver"></span></button>
     <div class="me">
-      <b id="me-email"></b>
-      <span id="me-role">مدير النظام</span>
+      <div class="me-row">
+        <div><b id="me-email"></b><span id="me-role">مدير النظام</span></div>
+        <button id="theme-toggle" title="تبديل المظهر">🌙</button>
+      </div>
       <button class="btn sm" id="btn-out" style="margin-top:10px;width:100%">تسجيل الخروج</button>
     </div>
   </aside>
@@ -152,10 +202,20 @@ label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px;font-wei
     <!-- 1. OVERVIEW -->
     <section data-pane="overview">
       <div class="stats" id="overview-stats">
-        <div class="card stat warn"><span>طلبات بانتظار القرار</span><b id="s-pending">0</b></div>
-        <div class="card stat"><span>إجمالي الوكلاء</span><b id="s-agents">0</b></div>
-        <div class="card stat"><span>اشتراكات فعّالة</span><b id="s-active">0</b></div>
-        <div class="card stat"><span>الإيرادات التقديرية</span><b id="s-revenue">0 د.ع</b></div>
+        <div class="card stat warn"><span class="ico">⏳</span><div><span>طلبات بانتظار القرار</span><b id="s-pending">0</b></div></div>
+        <div class="card stat"><span class="ico">👥</span><div><span>إجمالي الوكلاء</span><b id="s-agents">0</b></div></div>
+        <div class="card stat ok"><span class="ico">✅</span><div><span>اشتراكات فعّالة</span><b id="s-active">0</b></div></div>
+        <div class="card stat money"><span class="ico">💰</span><div><span>الإيرادات التقديرية</span><b id="s-revenue">0 د.ع</b></div></div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-h"><h3>الإيرادات خلال الأشهر</h3><span class="muted sm" id="rev-chart-range"></span></div>
+          <div class="card-b" id="rev-chart-wrap"></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h3>🏆 ترتيب الوكلاء</h3><button class="btn sm" data-go="agents">كل الوكلاء</button></div>
+          <div class="card-b" id="ov-leaderboard"></div>
+        </div>
       </div>
       <div class="grid2">
         <div class="card">
@@ -179,6 +239,8 @@ label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px;font-wei
           <button class="btn" data-f="ALL">الكل</button>
         </div>
         <input id="pay-q" placeholder="بحث برقم الحوالة أو الرمز (NF-…) أو البريد">
+        <button class="btn sm" id="btn-notif-toggle" title="صوت وإشعار متصفح فور وصول طلب تفعيل جديد">🔕 التنبيهات: متوقفة</button>
+        <button class="btn sm" id="btn-export-pay">⬇ تصدير CSV (التقرير المالي)</button>
       </div>
       <div class="card"><div class="card-b wrap" id="pay-list"></div></div>
     </section>
@@ -187,7 +249,10 @@ label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px;font-wei
     <section data-pane="agents" class="hidden">
       <div class="bar" style="justify-content:space-between">
         <input id="agent-q" placeholder="بحث بالبريد الإلكتروني أو الاسم">
-        <button class="btn primary" id="btn-add-agent">+ تسجيل وكيل جديد</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn sm" id="btn-export-agents">⬇ تصدير CSV (الوكلاء)</button>
+          <button class="btn primary" id="btn-add-agent">+ تسجيل وكيل جديد</button>
+        </div>
       </div>
       <div class="card"><div class="card-b wrap" id="agent-list"></div></div>
     </section>
@@ -204,6 +269,66 @@ label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px;font-wei
           <span class="muted" id="admins-count-label">0 مشرف</span>
         </div>
         <div class="card-b wrap" id="admin-list"></div>
+      </div>
+    </section>
+
+    <!-- 4.5 CONTROL CENTER (صيانة شاملة + إيقاف/تفعيل الوكلاء) -->
+    <section data-pane="control" class="hidden">
+      <div class="grid2">
+        <div class="card danger-card" id="maint-card">
+          <div class="card-h"><h3>⚠️ وضع الصيانة الشامل (قفل كل التطبيقات)</h3></div>
+          <div class="pad">
+            <p class="muted">عند التفعيل، كل الوكلاء يشوفون شاشة صيانة بدل التطبيق فوراً، بدون ما يحتاجوا تحديث. استخدمه فقط أثناء صيانة حقيقية أو مشكلة طارئة بالمنظومة.</p>
+            <div class="switch-row">
+              <div><b>إيقاف كل التطبيقات مؤقتاً</b><div class="muted" id="maint-status">غير مفعّل حالياً</div></div>
+              <label class="switch"><input type="checkbox" id="maint-toggle"><span class="slider"></span></label>
+            </div>
+            <label for="maint-msg">الرسالة التي تظهر للوكلاء</label>
+            <textarea id="maint-msg" rows="3" maxlength="200" placeholder="التطبيق قيد الصيانة حالياً، سيتم فتحه قريباً جداً..."></textarea>
+            <button class="btn primary" id="maint-save" style="margin-top:14px">حفظ وتطبيق فوراً</button>
+            <div class="muted" id="maint-meta" style="margin-top:10px"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h3>🔒 حسابات مجمّدة حالياً</h3><button class="btn sm" data-go="agents">كل الوكلاء</button></div>
+          <div class="card-b" id="ctl-suspended"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4.5 ACTIVATION CARDS -->
+    <section data-pane="cards" class="hidden">
+      <div class="card">
+        <div class="card-h"><h3>🎫 توليد كرتات تفعيل جديدة</h3></div>
+        <div class="pad">
+          <p class="muted">كل كرت رمز فريد يرتبط بخطة محددة. المستخدم يدخل الرمز داخل التطبيق فيتفعل اشتراكه فوراً، بدون طلب حوالة أو انتظار موافقة. مسار الترقية القديم بالحوالات يبقى يعمل بالتوازي بدون أي تغيير.</p>
+          <div class="bar" style="margin-top:12px">
+            <select id="card-plan">
+              <option value="MONTHLY">شهري</option>
+              <option value="SEMI_ANNUAL">نصف سنوي</option>
+              <option value="ANNUAL">سنوي</option>
+            </select>
+            <input id="card-qty" type="number" min="1" max="500" value="10" style="max-width:120px" placeholder="العدد">
+            <button class="btn primary" id="card-gen">توليد الكرتات</button>
+          </div>
+          <div class="muted" id="card-gen-meta" style="margin-top:8px"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="card-h">
+          <h3>الكرتات المولّدة</h3>
+          <div style="display:flex;gap:8px">
+            <div class="tabs" id="card-tabs">
+              <button class="btn on" data-f="UNUSED">غير مستخدمة</button>
+              <button class="btn" data-f="USED">مستخدمة</button>
+              <button class="btn" data-f="VOID">ملغاة</button>
+              <button class="btn" data-f="ALL">الكل</button>
+            </div>
+            <button class="btn sm" id="btn-export-cards">⬇ تصدير CSV</button>
+          </div>
+        </div>
+        <div class="card-b wrap" id="card-list"></div>
       </div>
     </section>
 
@@ -374,12 +499,30 @@ label{display:block;margin:12px 0 4px;color:var(--muted);font-size:13px;font-wei
     </div>
   </form>
 </div></div>
+
+<!-- PASSWORD RE-CONFIRMATION (حماية إضافية قبل الإجراءات الحساسة) -->
+<div class="modal hidden" id="pwrc-modal"><div class="box" style="max-width:420px">
+  <h3>🔐 تأكيد الهوية مطلوب</h3>
+  <p class="muted" id="pwrc-label" style="margin-top:4px"></p>
+  <form id="pwrc-form">
+    <div id="pwrc-pass-group" style="margin-top:12px">
+      <label for="pwrc-pass">كلمة المرور الحالية لحسابك</label>
+      <input id="pwrc-pass" type="password" autocomplete="current-password" placeholder="••••••••">
+    </div>
+    <div id="pwrc-google-group" class="hidden muted" style="margin-top:12px">هذا الحساب مسجّل دخوله عبر Google. اضغط الزر لتأكيد هويتك عبر حسابك مباشرة.</div>
+    <div style="color:var(--bad);min-height:18px;margin-top:8px;font-size:13px" id="pwrc-err"></div>
+    <div class="row-actions" style="margin-top:14px">
+      <button type="submit" class="btn primary" id="pwrc-ok">تأكيد والمتابعة</button>
+      <button type="button" class="btn" id="pwrc-cancel">إلغاء</button>
+    </div>
+  </form>
+</div></div>
 <div id="toast" role="status"></div>
 
 <script type="module">
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, query, limit, onSnapshot, doc, getDoc, writeBatch, addDoc, setDoc, deleteDoc, updateDoc, serverTimestamp, Timestamp, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, query, limit, onSnapshot, doc, getDoc, getDocs, writeBatch, addDoc, setDoc, deleteDoc, updateDoc, serverTimestamp, Timestamp, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBMWq8i9SmpaKcMvMXq2gv-mTOdth6Vcxg",
@@ -393,7 +536,7 @@ const firebaseConfig = {
 const SUPER_ADMIN_EMAIL = "mantime50@gmail.com";
 const SUBSCRIPTION_DAYS = 30;
 
-const C = { USERS:"users", PAY:"payment_requests", BC:"system_broadcasts", AUDIT:"audit_logs", ADMINS:"admin_users" };
+const C = { USERS:"users", PAY:"payment_requests", BC:"system_broadcasts", AUDIT:"audit_logs", ADMINS:"admin_users", CARDS:"license_keys" };
 const VER = ["app_system","version_control"];
 
 const FIRESTORE_DATABASE_ID = "ai-studio-android-netmanag-0bf5726b-c367-4f3f-a36f-0430155953b1";
@@ -421,6 +564,26 @@ const PERM_LABELS = {
 
 const LBL = { PENDING:"بانتظار القرار", APPROVED:"مقبول", REJECTED:"مرفوض", ACTIVE:"فعّال", EXPIRED:"منتهي", SUSPENDED:"مجمّد", ADMIN:"مدير", AGENT:"وكيل", NORMAL:"عادي", HIGH:"عاجل" };
 const tag = v => `<span class="tag t-${esc(v)}">${LBL[v] || esc(v || "—")}</span>`;
+const PLAN_LABEL = p => ({ ANNUAL: "سنوي", SEMI_ANNUAL: "نصف سنوي", MONTHLY: "شهري" }[String(p || "").toUpperCase()] || p || "—");
+
+/* تصدير CSV عام — يضيف BOM حتى تنفتح الحروف العربية صحيحة داخل Excel */
+function downloadCSV(filename, headers, rows){
+  const cell = v => {
+    const s = String(v ?? "");
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const lines = [headers.map(cell).join(","), ...rows.map(r => r.map(cell).join(","))];
+  const csv = "﻿" + lines.join("\r\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
 
 const S = {
   pay: [],
@@ -428,8 +591,10 @@ const S = {
   audit: [],
   bc: [],
   admins: [],
+  cards: [],
   ver: null,
   filter: "PENDING",
+  cardFilter: "UNUSED",
   me: null,
   perms: {},
   isSuper: false,
@@ -442,6 +607,8 @@ const TITLES = {
   payments: ["طلبات التفعيل", "مطابقة الحوالات والموافقة أو الرفض"],
   agents: ["الوكلاء", "الحسابات المسجّلة وحالة اشتراكاتها وتجديدها"],
   admins: ["المشرفون والصلاحيات", "إدارة المستخدمين الإداريين ومنح الصلاحيات المستقلة الدقيقة"],
+  control: ["التحكم والصيانة", "قفل طوارئ شامل لكل التطبيقات، ومتابعة الحسابات المجمّدة"],
+  cards: ["كرتات التفعيل المسبقة الدفع", "توليد كرتات تفعيل فورية بالكود، إلى جانب مسار الترقية بالحوالة"],
   broadcast: ["التعميمات", "إرسال إشعارات مباشرة إلى هواتف الوكلاء"],
   audit: ["سجل العمليات", "توثيق كامل لكافة الإجراءات والقرارات الإدارية"],
   version: ["الإصدارات والتحديث", "التحكم في تحديثات التطبيق وفرض التحديثات"]
@@ -455,6 +622,69 @@ function toast(m, err=false){
   toast.t = setTimeout(() => t.className = "", 2800);
 }
 setInterval(() => $("#clock").textContent = new Date().toLocaleTimeString("ar-IQ"), 1000);
+
+/* ===== تنبيه صوتي + إشعار متصفح عند وصول طلب تفعيل جديد (طلب #52) =====
+   تفضيل شخصي محفوظ محلياً بمتصفح هذا الجهاز فقط (localStorage) — كل من يفتح اللوحة
+   على جهازه يفعّلها بنفسه، ومافيه حاجة لمزامنتها بالفايرستور لأنها مجرد تفضيل عرض. */
+const NOTIF_KEY = "nf_notify_pending";
+const notifEnabled = () => { try { return localStorage.getItem(NOTIF_KEY) === "1"; } catch (e) { return false; } };
+const setNotifEnabled = v => { try { localStorage.setItem(NOTIF_KEY, v ? "1" : "0"); } catch (e) {} };
+
+function renderNotifToggle(){
+  const b = $("#btn-notif-toggle");
+  if (!b) return;
+  const on = notifEnabled();
+  b.textContent = on ? "🔔 التنبيهات: مفعّلة" : "🔕 التنبيهات: متوقفة";
+  b.classList.toggle("notif-on", on);
+}
+
+function playBeep(){
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const now = ctx.currentTime;
+    const tone = (freq, start, dur) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = "sine"; o.frequency.value = freq;
+      g.gain.value = 0.0001;
+      o.connect(g); g.connect(ctx.destination);
+      g.gain.exponentialRampToValueAtTime(0.25, now + start + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
+      o.start(now + start); o.stop(now + start + dur + 0.02);
+    };
+    tone(880, 0, 0.3);
+    tone(1150, 0.32, 0.35);
+    setTimeout(() => ctx.close().catch(() => {}), 1200);
+  } catch (e) { console.warn("beep failed:", e); }
+}
+
+// null = لم يُحمَّل أول لقطة بيانات بعد — نتجاهل "الطلبات الموجودة أصلاً" ولا ننبّه إلا على الجديد فعلاً
+S.seenPayIds = null;
+function checkNewPendingPayments(){
+  const pendingIds = new Set(S.pay.filter(p => (p.status || "PENDING").toUpperCase() === "PENDING").map(p => p.id));
+  if (S.seenPayIds === null) {
+    S.seenPayIds = pendingIds;
+    return;
+  }
+  const freshIds = [...pendingIds].filter(id => !S.seenPayIds.has(id));
+  S.seenPayIds = pendingIds;
+  if (!freshIds.length) return;
+
+  if (!notifEnabled()) return;
+  playBeep();
+  if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+    try {
+      const first = S.pay.find(p => p.id === freshIds[0]);
+      const email = first ? (first.agentEmail || first.email || "وكيل") : "وكيل";
+      const n = new Notification("🔔 طلب تفعيل جديد — NetFlow", {
+        body: freshIds.length > 1 ? `${freshIds.length} طلبات تفعيل جديدة بانتظار القرار` : `طلب تفعيل جديد من ${email}`
+      });
+      n.onclick = () => { window.focus(); show("payments"); n.close(); };
+    } catch (e) { console.warn("notification failed:", e); }
+  }
+  toast(freshIds.length > 1 ? `🔔 ${freshIds.length} طلبات تفعيل جديدة وصلت الآن` : "🔔 طلب تفعيل جديد وصل الآن");
+}
 
 /* فحص الصلاحية */
 function can(p) {
@@ -476,6 +706,14 @@ function show(v){
     toast("غير مصرح لك بإدارة الإصدارات", true);
     return;
   }
+  if (v === "control" && !S.isSuper) {
+    toast("التحكم والصيانة الشاملة للمدير العام فقط", true);
+    return;
+  }
+  if (v === "cards" && !S.isSuper) {
+    toast("توليد كرتات التفعيل للمدير العام فقط", true);
+    return;
+  }
 
   $$("[data-pane]").forEach(p => p.classList.toggle("hidden", p.dataset.pane !== v));
   $$(".nav").forEach(n => n.classList.toggle("active", n.dataset.view === v));
@@ -495,6 +733,11 @@ $$("#pay-tabs .btn").forEach(b => b.onclick = () => {
 $("#pay-q").oninput = renderPayments;
 $("#agent-q").oninput = renderAgents;
 $("#admin-q").oninput = renderAdmins;
+$$("#card-tabs .btn").forEach(b => b.onclick = () => {
+  S.cardFilter = b.dataset.f;
+  $$("#card-tabs .btn").forEach(x => x.classList.toggle("on", x === b));
+  renderCards();
+});
 $("#audit-f").onchange = renderAudit;
 
 /* الدخول والتحقق من الصلاحيات */
@@ -531,6 +774,130 @@ $("#login-form").onsubmit = async e => {
   btn.disabled = false;
 };
 $("#btn-out").onclick = () => signOut(auth);
+
+$("#btn-notif-toggle").onclick = async () => {
+  if (!notifEnabled()) {
+    if (typeof Notification === "undefined") {
+      toast("متصفحك لا يدعم إشعارات سطح المكتب، لكن سيبقى التنبيه الصوتي يعمل", true);
+    } else if (Notification.permission !== "granted") {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") { toast("يجب السماح بإشعارات المتصفح لتفعيل هذه الميزة بالكامل", true); }
+    }
+    setNotifEnabled(true);
+    toast("تم تفعيل التنبيه الصوتي عند وصول أي طلب تفعيل جديد");
+  } else {
+    setNotifEnabled(false);
+    toast("تم إيقاف التنبيهات");
+  }
+  renderNotifToggle();
+};
+renderNotifToggle();
+
+/* ===== تصدير CSV: الوكلاء + التقرير المالي ===== */
+$("#btn-export-agents").onclick = () => {
+  const list = S.dedupedAgents || [];
+  if (!list.length) { toast("لا توجد بيانات وكلاء لتصديرها", true); return; }
+  const rows = list.map(u => {
+    const info = accountInfo(u);
+    const kindLbl = KIND[info.kind] ? KIND[info.kind][1] : info.kind;
+    return [
+      u.name || u.fullName || "وكيل",
+      u.email || "",
+      kindLbl,
+      agentCountRaw(u, "subs"),
+      agentCountRaw(u, "panels"),
+      (info.kind === "PAID" || info.kind === "TRIAL") ? info.left : "",
+      fmtMs(info.end),
+      fmt(u.lastLoginAt)
+    ];
+  });
+  downloadCSV(`netflow-agents-${Date.now()}.csv`,
+    ["الاسم", "البريد الإلكتروني", "حالة الحساب", "عدد المشتركين", "عدد اللوحات", "الأيام المتبقية", "تاريخ الانتهاء", "آخر دخول"],
+    rows);
+  logTo(null, "AUDIT_LOG_EXPORTED", "تصدير تقرير CSV لقائمة الوكلاء");
+  toast(`تم تصدير ${rows.length} وكيل إلى ملف CSV`);
+};
+
+$("#btn-export-pay").onclick = () => {
+  if (!S.pay.length) { toast("لا توجد طلبات لتصديرها", true); return; }
+  const rows = S.pay.map(p => {
+    const email = p.agentEmail || p.email || "";
+    const plan = planOf(p);
+    const st = (p.status || "PENDING").toUpperCase();
+    const claimed = Number(p.amount_iqd || p.amount || 0);
+    const amt = claimed || PRICES[plan] || PRICES.MONTHLY;
+    const method = (p.payment_method || p.paymentMethod || "").toUpperCase() === "ZAIN_CASH" ? "زين كاش" : "حساب QI";
+    const tx = p.transactionId || p.transaction_id || "";
+    const ref = p.ref_code || p.refCode || "";
+    return [email, PLAN_LABEL(plan), amt, method, tx, ref, LBL[st] || st, fmt(p.submittedAt || p.createdAt || p.created_at)];
+  });
+  downloadCSV(`netflow-financial-report-${Date.now()}.csv`,
+    ["البريد الإلكتروني", "الباقة", "المبلغ (د.ع)", "طريقة الدفع", "رقم الحوالة", "رمز الطلب", "الحالة", "تاريخ الطلب"],
+    rows);
+  logTo(null, "AUDIT_LOG_EXPORTED", "تصدير التقرير المالي لطلبات التفعيل CSV");
+  toast(`تم تصدير ${rows.length} طلب إلى التقرير المالي`);
+};
+
+/* ===== كرتات التفعيل المسبقة الدفع: توليد + تصدير CSV ===== */
+$("#card-gen").onclick = () => busy($("#card-gen"), async () => {
+  if (!S.isSuper) { toast("توليد الكرتات للمدير العام فقط", true); return; }
+  const plan = $("#card-plan").value;
+  const qty = Math.max(1, Math.min(500, parseInt($("#card-qty").value, 10) || 0));
+  if (!qty) { toast("أدخل عدداً صحيحاً للكرتات", true); return; }
+  if (!confirm(`توليد ${qty} كرت تفعيل لباقة "${PLAN_LABEL(plan)}"؟`)) return;
+
+  // توليد أكواد فريدة محلياً (مع تفادي أي تكرار داخل هذه الدفعة نفسها)
+  const codes = new Set();
+  while (codes.size < qty) codes.add(genCardCode());
+  const codeList = [...codes];
+  const durationDays = CARD_PLAN_DAYS[plan] || 30;
+  const amount = PRICES[plan] || PRICES.MONTHLY;
+
+  // الكتابة على دفعات بحد أقصى 400 لكل دفعة (أقل من حد فايرستور 500 عملية بالدفعة الواحدة)
+  const CHUNK = 400;
+  let written = 0;
+  for (let i = 0; i < codeList.length; i += CHUNK) {
+    const chunk = codeList.slice(i, i + CHUNK);
+    const b = writeBatch(db);
+    chunk.forEach(code => {
+      b.set(doc(db, C.CARDS, code), {
+        plan_type: plan,
+        duration_days: durationDays,
+        amount_iqd: amount,
+        status: "ACTIVE",
+        is_used: false,
+        is_redeemed: false,
+        created_at: serverTimestamp(),
+        created_by: S.me.email
+      });
+    });
+    await b.commit();
+    written += chunk.length;
+  }
+
+  await logTo(null, "LICENSE_CARDS_GENERATED", `توليد ${written} كرت تفعيل لباقة ${PLAN_LABEL(plan)} (${durationDays} يوم)`);
+  $("#card-gen-meta").textContent = `✅ تم توليد ${written} كرت بنجاح. يتم تنزيل ملف الأكواد الآن...`;
+  downloadCSV(`netflow-cards-${plan}-${Date.now()}.csv`, ["الكود", "الباقة", "المدة (يوم)"], codeList.map(c => [c, PLAN_LABEL(plan), durationDays]));
+  toast(`تم توليد ${written} كرت بنجاح`);
+});
+
+$("#btn-export-cards").onclick = () => {
+  if (!S.cards.length) { toast("لا توجد كرتات لتصديرها", true); return; }
+  const rows = S.cards.map(k => [
+    k.id,
+    PLAN_LABEL(k.plan_type),
+    k.duration_days || CARD_PLAN_DAYS[k.plan_type] || "",
+    cardStatusOf(k) === "UNUSED" ? "غير مستخدم" : cardStatusOf(k) === "USED" ? "مستخدم" : "ملغى",
+    k.redeemed_by || "",
+    fmt(k.created_at),
+    k.created_by || ""
+  ]);
+  downloadCSV(`netflow-cards-report-${Date.now()}.csv`,
+    ["الكود", "الباقة", "المدة (يوم)", "الحالة", "استُخدم من", "تاريخ الإنشاء", "أنشأه"],
+    rows);
+  logTo(null, "AUDIT_LOG_EXPORTED", "تصدير تقرير كرتات التفعيل CSV");
+  toast(`تم تصدير ${rows.length} كرت`);
+};
 
 // أحداث تسجيل وكيل جديد
 $("#btn-add-agent").onclick = () => {
@@ -667,9 +1034,29 @@ function applyUiPermissions() {
   $("#nav-btn-payments").classList.toggle("hidden", !can("view_payments"));
   $("#nav-btn-agents").classList.toggle("hidden", !can("manage_agents") && !can("manage_subscriptions"));
   $("#nav-btn-admins").classList.toggle("hidden", !S.isSuper && !can("manage_settings"));
+  $("#nav-btn-control").classList.toggle("hidden", !S.isSuper);
+  $("#nav-btn-cards").classList.toggle("hidden", !S.isSuper);
   $("#nav-btn-broadcast").classList.toggle("hidden", !can("manage_settings"));
   $("#nav-btn-version").classList.toggle("hidden", !can("manage_settings"));
 }
+
+/* تبديل المظهر (فاتح/داكن) */
+(function initTheme(){
+  let saved = "";
+  try { saved = localStorage.getItem("nf_theme") || ""; } catch (_) {}
+  if (saved === "light") { document.documentElement.setAttribute("data-theme", "light"); }
+  document.addEventListener("DOMContentLoaded", () => {
+    const b = $("#theme-toggle");
+    if (!b) return;
+    b.textContent = saved === "light" ? "☀️" : "🌙";
+    b.onclick = () => {
+      const isLight = document.documentElement.getAttribute("data-theme") === "light";
+      if (isLight) { document.documentElement.removeAttribute("data-theme"); b.textContent = "🌙"; }
+      else { document.documentElement.setAttribute("data-theme", "light"); b.textContent = "☀️"; }
+      try { localStorage.setItem("nf_theme", isLight ? "dark" : "light"); } catch (_) {}
+    };
+  });
+})();
 
 /* استماع البيانات الحية */
 function listen(){
@@ -685,6 +1072,7 @@ function listen(){
   const sub = (col, f, n, key) => S.unsubs.push(
     onSnapshot(query(collection(db, col), limit(n)), s => {
       S[key] = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => getSec(b, f) - getSec(a, f));
+      if (key === "pay") checkNewPendingPayments();
       ok();
       renderAll();
     }, err => {
@@ -703,12 +1091,39 @@ function listen(){
   if (S.isSuper || can("manage_settings")) {
     sub(C.ADMINS, "createdAt", 100, "admins");
   }
+  // كرتات التفعيل المسبقة الدفع: للمدير العام فقط (نفس تبويب "كرتات التفعيل" بالقائمة)
+  if (S.isSuper) {
+    sub(C.CARDS, "created_at", 2000, "cards");
+  }
 
   // Version listener
   S.unsubs.push(onSnapshot(doc(db, ...VER), d => {
     S.ver = d.data() || {};
     renderVersion();
   }));
+
+  // Global maintenance killswitch (system_control/emergency) — نفس المستند اللي يسمعه تطبيق الموبايل
+  if (S.isSuper) {
+    S.unsubs.push(onSnapshot(doc(db, "system_control", "emergency"), d => {
+      S.maint = d.exists() ? d.data() : null;
+      renderMaintenance();
+    }, err => console.warn("maintenance listener:", err)));
+  }
+}
+
+function renderMaintenance(){
+  const box = $("#maint-card");
+  if (!box) return;
+  const m = S.maint || {};
+  const active = m.is_maintenance_mode === true;
+  $("#maint-toggle").checked = active;
+  box.classList.toggle("active", active);
+  const who = m.updated_by ? ` · آخر تعديل: ${esc(m.updated_by)}` : "";
+  $("#maint-status").textContent = active ? "مفعّل الآن — كل الوكلاء مقفولين 🔴" : "غير مفعّل حالياً — التطبيق يعمل بشكل طبيعي";
+  $("#maint-meta").textContent = m.updated_at ? `${fmt(m.updated_at)}${who}` : "";
+  if (!$("#maint-msg").matches(":focus")) {
+    $("#maint-msg").value = m.message || "التطبيق قيد الصيانة حالياً، سيتم فتحه قريباً جداً...";
+  }
 }
 
 function renderAll(){
@@ -716,13 +1131,187 @@ function renderAll(){
   renderPayments();
   renderAgents();
   renderAdmins();
+  renderControl();
+  renderCards();
   renderBroadcast();
   renderAudit();
   renderVersion();
 }
 
+/* 4.5 CONTROL CENTER: الوكلاء المجمّدون حالياً (مشتق من نفس بيانات S.users، بدون طلب شبكة إضافي) */
+function renderControl(){
+  if (!S.isSuper) return;
+  const seen = new Set();
+  const suspended = [];
+  for (const u of S.users) {
+    const em = (u.email || u.agentEmail || "").trim().toLowerCase();
+    const key = em || u.id;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    if (u.subscriptionStatus === "SUSPENDED" || u.is_suspended === true) suspended.push(u);
+  }
+  const c = $("#ctl-suspended");
+  if (!c) return;
+  if (!suspended.length) {
+    c.innerHTML = `<div class="empty">لا يوجد أي حساب مجمّد حالياً 👍</div>`;
+  } else {
+    c.innerHTML = suspended.map(u => `
+      <div class="mini-agent-row">
+        <div><b>${esc(u.name || u.fullName || "وكيل")}</b><div class="muted">${esc(u.email || "")}</div></div>
+        <button class="btn sm ok" data-act="unsuspend" data-id="${esc(u.id)}">رفع التجميد</button>
+      </div>
+    `).join("");
+  }
+}
+
+/* 4.6 كرتات التفعيل المسبقة الدفع (license_keys) — توليد وإدارة فقط. الاستبدال الفعلي من
+   داخل التطبيق محمي بقواعد أمان صارمة بالـ firestore.rules (راجع تعليقاتها). */
+const CARD_PLAN_DAYS = { MONTHLY: 30, SEMI_ANNUAL: 180, ANNUAL: 365 };
+const CARD_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"; // بدون 0/O و 1/I/L المتشابهة بالخط
+
+function genCardCode(){
+  let s = "NF";
+  for (let i = 0; i < 6; i++) s += CARD_ALPHABET[Math.floor(Math.random() * CARD_ALPHABET.length)];
+  return s;
+}
+
+function cardStatusOf(k){
+  if (k.status === "REVOKED" || k.status === "DISABLED" || k.status === "EXPIRED") return "VOID";
+  if (k.is_used === true || k.is_redeemed === true || k.status === "USED") return "USED";
+  return "UNUSED";
+}
+
+function renderCards(){
+  if (!S.isSuper) return;
+  const c = $("#card-list");
+  if (!c) return;
+  const f = S.cardFilter;
+  const list = S.cards.filter(k => f === "ALL" || cardStatusOf(k) === f);
+  if (!list.length) {
+    c.innerHTML = `<div class="empty">لا توجد كرتات مطابقة</div>`;
+    return;
+  }
+  c.innerHTML = `<table>
+    <thead><tr><th>الكود</th><th>الباقة</th><th>الحالة</th><th>تاريخ الإنشاء</th><th>استُخدم من</th><th>إجراء</th></tr></thead>
+    <tbody>${list.map(k => {
+      const st = cardStatusOf(k);
+      const stLbl = st === "UNUSED" ? "غير مستخدم" : st === "USED" ? "مستخدم" : "ملغى";
+      const stCls = st === "UNUSED" ? "ok" : st === "USED" ? "" : "bad";
+      const usedBy = st === "USED" ? esc(k.redeemed_by || "") : "—";
+      const voidBtn = st === "UNUSED"
+        ? `<button class="btn sm bad" data-act="void-card" data-id="${esc(k.id)}">إلغاء</button>`
+        : "";
+      return `<tr>
+        <td class="mono" style="font-weight:700;color:var(--accent)">${esc(k.id)}
+          <button class="btn sm" data-act="copy-card" data-id="${esc(k.id)}" title="نسخ الكود" style="padding:2px 7px;margin-right:4px">📋</button>
+        </td>
+        <td>${esc(PLAN_LABEL(k.plan_type))} (${esc(k.duration_days || CARD_PLAN_DAYS[k.plan_type] || "")} يوم)</td>
+        <td><span class="tag t-${stCls === "bad" ? "REJECTED" : stCls === "ok" ? "ACTIVE" : "PENDING"}">${stLbl}</span></td>
+        <td class="muted">${fmt(k.created_at)}</td>
+        <td class="muted">${usedBy}</td>
+        <td><div class="row-actions">${voidBtn}</div></td>
+      </tr>`;
+    }).join("")}</tbody>
+  </table>`;
+}
+
 /* 1. OVERVIEW */
+/* رسم بياني للإيرادات آخر 6 أشهر — SVG مرسوم مباشرة بدون أي مكتبة خارجية */
+function monthKeyOf(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`; }
+function renderRevenueChart(){
+  const wrap = $("#rev-chart-wrap");
+  if (!wrap) return;
+  const now = new Date();
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ key: monthKeyOf(d), label: d.toLocaleDateString("ar-IQ", { month: "short" }), total: 0 });
+  }
+  const byKey = new Map(months.map(m => [m.key, m]));
+  for (const p of S.pay) {
+    if ((p.status || "").toUpperCase() !== "APPROVED") continue;
+    const ts = p.submittedAt || p.approvedAt || p.createdAt || p.created_at;
+    const sec = ts?.seconds ?? (ts?.toDate ? Math.floor(ts.toDate().getTime()/1000) : 0);
+    if (!sec) continue;
+    const m = byKey.get(monthKeyOf(new Date(sec * 1000)));
+    if (m) m.total += (p.amount_iqd || p.amount || 10000);
+  }
+  const range = $("#rev-chart-range");
+  if (range) range.textContent = `${months[0].label} ← ${months[months.length-1].label}`;
+
+  const max = Math.max(1, ...months.map(m => m.total));
+  const W = 560, H = 200, padL = 50, padB = 26, padT = 14;
+  const plotW = W - padL - 10;
+  const gap = plotW / months.length;
+  const barW = gap * 0.52;
+  const yFor = v => padT + (H - padT - padB) * (1 - v / max);
+  const shortNum = v => v >= 1000 ? (Math.round(v/100)/10) + "ألف" : String(v);
+
+  const grid = [0, 0.25, 0.5, 0.75, 1].map(f => {
+    const y = padT + (H - padT - padB) * (1 - f);
+    return `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-6}" y2="${y.toFixed(1)}" style="stroke:var(--line)" stroke-dasharray="3,4"/>
+      <text x="${padL-8}" y="${(y+4).toFixed(1)}" font-size="10" style="fill:var(--muted)" text-anchor="end">${esc(shortNum(Math.round(max*f)))}</text>`;
+  }).join("");
+
+  const bars = months.map((m, i) => {
+    const x = padL + i * gap + (gap - barW) / 2;
+    const yTop = yFor(m.total);
+    const h = Math.max((H - padB) - yTop, 0);
+    return `<g>
+      <rect x="${x.toFixed(1)}" y="${yTop.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="6" style="fill:url(#revGrad)"><title>${esc(m.total.toLocaleString("ar-IQ"))} د.ع</title></rect>
+      <text x="${(x+barW/2).toFixed(1)}" y="${H-8}" font-size="11" style="fill:var(--muted)" text-anchor="middle">${esc(m.label)}</text>
+      ${m.total > 0 ? `<text x="${(x+barW/2).toFixed(1)}" y="${(yTop-6).toFixed(1)}" font-size="10" font-weight="700" style="fill:var(--text)" text-anchor="middle">${esc(shortNum(m.total))}</text>` : ""}
+    </g>`;
+  }).join("");
+
+  wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px;overflow:visible" preserveAspectRatio="xMidYMid meet">
+    <defs><linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" style="stop-color:var(--accent)"/>
+      <stop offset="100%" style="stop-color:var(--accent2)"/>
+    </linearGradient></defs>
+    ${grid}${bars}
+  </svg>`;
+}
+
+/* لوحة ترتيب الوكلاء (الأكثر أرباحاً ونشاطاً) — من بيانات طلبات الدفع المقبولة المتوفرة أصلاً بالذاكرة */
+function renderLeaderboard(){
+  const box = $("#ov-leaderboard");
+  if (!box) return;
+  const byAgent = new Map();
+  for (const p of S.pay) {
+    if ((p.status || "").toUpperCase() !== "APPROVED") continue;
+    const email = (p.agentEmail || p.email || "").trim().toLowerCase();
+    if (!email) continue;
+    const cur = byAgent.get(email) || { email, revenue: 0, count: 0 };
+    cur.revenue += (p.amount_iqd || p.amount || 10000);
+    cur.count += 1;
+    byAgent.set(email, cur);
+  }
+  const nameByEmail = new Map();
+  for (const u of S.users) {
+    const em = (u.email || u.agentEmail || "").trim().toLowerCase();
+    if (em && !nameByEmail.has(em)) nameByEmail.set(em, u.name || u.fullName || "");
+  }
+  const rows = [...byAgent.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 5);
+  if (!rows.length) {
+    box.innerHTML = `<div class="empty">لا توجد اشتراكات مقبولة بعد لعرض الترتيب</div>`;
+    return;
+  }
+  const medals = ["🥇", "🥈", "🥉"];
+  box.innerHTML = rows.map((r, i) => `
+    <div class="mini-agent-row">
+      <div>
+        <b>${medals[i] || `#${i+1}`} ${esc(nameByEmail.get(r.email) || r.email)}</b>
+        <div class="muted">${esc(r.email)} · ${r.count} عملية تفعيل مقبولة</div>
+      </div>
+      <div class="mono" style="color:var(--ok);font-weight:700">${esc(r.revenue.toLocaleString("ar-IQ"))} د.ع</div>
+    </div>
+  `).join("");
+}
+
 function renderOverview(){
+  renderRevenueChart();
+  renderLeaderboard();
   const pending = S.pay.filter(p => (p.status || "PENDING").toUpperCase() === "PENDING").length;
   const emailSet = new Set();
   const dedupedUsers = [];
@@ -907,22 +1496,63 @@ const KIND = {
   PAID: ["ACTIVE", "مشترك"], TRIAL: ["ADMIN", "تجريبي"], SUSPENDED: ["SUSPENDED", "مجمّد"],
   PAID_EXPIRED: ["EXPIRED", "اشتراك منتهي"], TRIAL_ENDED: ["EXPIRED", "انتهت التجربة"]
 };
-/* إحصائيات حقيقية لكل وكيل: عدد المشتركين وعدد اللوحات (من قاعدة البيانات مباشرة) */
-const AGENT_COUNTS = new Map(); // uid -> {subs, panels, at, err}
+/* إحصائيات حقيقية لكل وكيل: عدد المشتركين وعدد اللوحات (من قاعدة البيانات مباشرة)
+   ملاحظة مهمة: لو نفس الوكيل (نفس البريد) عنده أكثر من حساب مكرر (users/{uid} أكثر من وحدة)،
+   الجمع الخام لعدد الوثائق بكل حساب يضاعف العدد الحقيقي. فهنا نحسب عدد المشتركين الفريدين
+   (بالاسم الخارجي/اليوزر/الهاتف) عبر كل الحسابات المكررة، مو مجرد جمعهم. */
+const AGENT_COUNTS = new Map(); // uid -> {subs, panels, at, err}   (حساب وحيد: عدّ سريع من السيرفر)
+const GROUP_COUNTS = new Map(); // "id1|id2" -> {subs, panels, at, err}  (حسابات مكررة: عدّ فريد دقيق)
 const COUNT_TTL = 120000;
+const groupKey = ids => [...ids].sort().join("|");
+
 async function countOf(uid, sub){
   const r = await getCountFromServer(collection(db, C.USERS, uid, sub));
   return r.data().count;
 }
-async function loadAgentCounts(ids){
+async function uniqueSubscriberKeys(uid){
+  const keys = new Set();
+  try {
+    const snap = await getDocs(collection(db, C.USERS, uid, "subscribers"));
+    snap.forEach(d => {
+      const x = d.data();
+      const key = (x.externalUsername || x.username || x.phone || "").toString().trim().toLowerCase();
+      keys.add(key || `__${uid}_${d.id}`);
+    });
+  } catch (e) { /* يتجاهل، يحسب الموجود فقط */ }
+  return keys;
+}
+async function uniquePanelKeys(uid){
+  const keys = new Set();
+  try {
+    const snap = await getDocs(collection(db, C.USERS, uid, "panels"));
+    snap.forEach(d => keys.add(d.id)); // نفس معرف اللوحة يتكرر إذا نفس اللوحة مرتبطة من حسابين مكررين
+  } catch (e) {}
+  return keys;
+}
+
+async function loadAgentCounts(groups){
   const now = Date.now();
-  const todo = ids.filter(id => { const c = AGENT_COUNTS.get(id); return !c || (now - c.at > COUNT_TTL && !c.loading); });
-  if (!todo.length) return;
-  todo.forEach(id => AGENT_COUNTS.set(id, { ...(AGENT_COUNTS.get(id) || {}), loading: true, at: now }));
+  const singleTodo = [];
+  const multiTodo = [];
+  for (const ids of groups) {
+    if (ids.length <= 1) {
+      const id = ids[0];
+      const c = AGENT_COUNTS.get(id);
+      if (!c || (now - c.at > COUNT_TTL && !c.loading)) singleTodo.push(id);
+    } else {
+      const gk = groupKey(ids);
+      const c = GROUP_COUNTS.get(gk);
+      if (!c || (now - c.at > COUNT_TTL && !c.loading)) multiTodo.push(ids);
+    }
+  }
+  if (!singleTodo.length && !multiTodo.length) return;
+  singleTodo.forEach(id => AGENT_COUNTS.set(id, { ...(AGENT_COUNTS.get(id) || {}), loading: true, at: now }));
+  multiTodo.forEach(ids => GROUP_COUNTS.set(groupKey(ids), { loading: true, at: now }));
+
   let i = 0;
-  const worker = async () => {
-    while (i < todo.length) {
-      const id = todo[i++];
+  const singleWorker = async () => {
+    while (i < singleTodo.length) {
+      const id = singleTodo[i++];
       try {
         const [subs, panels] = await Promise.all([countOf(id, "subscribers"), countOf(id, "panels")]);
         AGENT_COUNTS.set(id, { subs, panels, at: Date.now() });
@@ -931,19 +1561,40 @@ async function loadAgentCounts(ids){
       }
     }
   };
-  await Promise.all([worker(), worker(), worker(), worker()]);
+  let j = 0;
+  const multiWorker = async () => {
+    while (j < multiTodo.length) {
+      const ids = multiTodo[j++];
+      const gk = groupKey(ids);
+      try {
+        const [subSets, panelSets] = await Promise.all([
+          Promise.all(ids.map(uniqueSubscriberKeys)),
+          Promise.all(ids.map(uniquePanelKeys))
+        ]);
+        const subsUnion = new Set(); subSets.forEach(s => s.forEach(k => subsUnion.add(k)));
+        const panelsUnion = new Set(); panelSets.forEach(s => s.forEach(k => panelsUnion.add(k)));
+        GROUP_COUNTS.set(gk, { subs: subsUnion.size, panels: panelsUnion.size, at: Date.now() });
+      } catch (e) {
+        GROUP_COUNTS.set(gk, { err: true, at: Date.now() });
+      }
+    }
+  };
+  await Promise.all([singleWorker(), singleWorker(), singleWorker(), singleWorker(), multiWorker(), multiWorker()]);
   if (!document.hidden) renderAgents();
 }
 function agentCountCell(u, field){
   const ids = u._ids && u._ids.length ? u._ids : [u.id];
-  let total = 0;
-  for (const id of ids) {
-    const c = AGENT_COUNTS.get(id);
-    if (!c || c.loading) return `<span class="muted">…</span>`;
-    if (c.err) return `<span class="muted" title="تعذّر الجلب">؟</span>`;
-    total += c[field] || 0;
-  }
-  return `<b>${total}</b>`;
+  const c = ids.length <= 1 ? AGENT_COUNTS.get(ids[0]) : GROUP_COUNTS.get(groupKey(ids));
+  if (!c || c.loading) return `<span class="muted">…</span>`;
+  if (c.err) return `<span class="muted" title="تعذّر الجلب">؟</span>`;
+  return `<b>${c[field] || 0}</b>`;
+}
+// نفس منطق agentCountCell لكنه يرجّع رقماً خاماً (أو فراغ) — يُستخدم عند تصدير CSV
+function agentCountRaw(u, field){
+  const ids = u._ids && u._ids.length ? u._ids : [u.id];
+  const c = ids.length <= 1 ? AGENT_COUNTS.get(ids[0]) : GROUP_COUNTS.get(groupKey(ids));
+  if (!c || c.loading || c.err) return "";
+  return c[field] ?? "";
 }
 
 const leftColor = d => d <= 3 ? "var(--bad)" : d <= 7 ? "var(--warn)" : "var(--ok)";
@@ -1004,7 +1655,8 @@ function renderAgents(){
     }
   }
 
-  loadAgentCounts([...new Set(dedupedList.flatMap(u => u._ids && u._ids.length ? u._ids : [u.id]))]);
+  loadAgentCounts(dedupedList.map(u => u._ids && u._ids.length ? u._ids : [u.id]));
+  S.dedupedAgents = dedupedList; // يُستخدم عند تصدير تقرير CSV للوكلاء (نفس القائمة بدون تكرار)
   const list = dedupedList.filter(u => !q || (u.email || "").toLowerCase().includes(q) || (u.name || u.fullName || "").toLowerCase().includes(q));
   const c = $("#agent-list");
   if (!list.length) { c.innerHTML = `<div class="empty">لا يوجد وكلاء مطابقون</div>`; return; }
@@ -1199,6 +1851,59 @@ async function busy(btn, fn){
   }
 }
 
+/* ===== تحصين حساب المدير العام: تأكيد كلمة المرور (أو Google) قبل أي إجراء حساس/خطير =====
+   هذا لا يستبدل مصادقة Firebase الثنائية (2FA) الحقيقية — تفعيل 2FA الفعلي يحتاج خطوات
+   من لوحة Firebase Console نفسها (راجع التقرير النهائي)، وما كان ممكن تفعيله هنا بأمان وبدون
+   خطر قفل الحساب الوحيد وأنت غايب. هذا طبقة حماية إضافية حقيقية: حتى لو سُرقت الجلسة
+   (المتصفح مفتوح، التوكن مسروق...) ما يكدر أي إجراء خطير ينفذ بدون كلمة المرور نفسها. */
+function requirePasswordConfirm(actionLabel){
+  return new Promise(resolve => {
+    const modal = $("#pwrc-modal");
+    const u = auth.currentUser;
+    const providers = (u?.providerData || []).map(p => p.providerId);
+    const isGoogleOnly = providers.includes("google.com") && !providers.includes("password");
+
+    $("#pwrc-label").textContent = actionLabel;
+    $("#pwrc-pass").value = "";
+    $("#pwrc-err").textContent = "";
+    $("#pwrc-pass-group").classList.toggle("hidden", isGoogleOnly);
+    $("#pwrc-google-group").classList.toggle("hidden", !isGoogleOnly);
+    $("#pwrc-ok").textContent = isGoogleOnly ? "تأكيد عبر Google" : "تأكيد والمتابعة";
+    modal.classList.remove("hidden");
+    if (!isGoogleOnly) setTimeout(() => $("#pwrc-pass").focus(), 60);
+
+    const cleanup = () => {
+      modal.classList.add("hidden");
+      $("#pwrc-form").onsubmit = null;
+      $("#pwrc-cancel").onclick = null;
+    };
+    const submit = async e => {
+      if (e) e.preventDefault();
+      $("#pwrc-err").textContent = "";
+      $("#pwrc-ok").disabled = true;
+      try {
+        if (isGoogleOnly) {
+          await reauthenticateWithPopup(u, new GoogleAuthProvider());
+        } else {
+          const pass = $("#pwrc-pass").value;
+          if (!pass) { $("#pwrc-err").textContent = "أدخل كلمة المرور أولاً"; $("#pwrc-ok").disabled = false; return; }
+          const cred = EmailAuthProvider.credential(u.email, pass);
+          await reauthenticateWithCredential(u, cred);
+        }
+        cleanup();
+        resolve(true);
+      } catch (err) {
+        console.warn("reauth failed:", err);
+        $("#pwrc-err").textContent = "تعذّر التأكيد — تحقق من كلمة المرور وحاول مجدداً";
+      } finally {
+        $("#pwrc-ok").disabled = false;
+      }
+    };
+    $("#pwrc-form").onsubmit = submit;
+    $("#pwrc-cancel").onclick = () => { cleanup(); resolve(false); };
+  });
+}
+
 /* APPROVE & REJECT ACTIONS */
 async function approve(p){
   if (!can("approve_payments")) {
@@ -1386,6 +2091,12 @@ $("#admin-form").onsubmit = async e => {
     perms[k] = $(`#p-${k}`).checked;
   });
 
+  // منح صلاحيات كاملة/إدارة الإعدادات لمشرف = إجراء حساس يحتاج تأكيد هوية المدير العام أولاً
+  if (perms.manage_settings) {
+    const ok = await requirePasswordConfirm(`تأكيد هويتك لمنح (${name || email}) صلاحية "إدارة الإعدادات" (صلاحية كاملة تقريباً)`);
+    if (!ok) return;
+  }
+
   btn.disabled = true;
   btn.textContent = "جاري الحفظ...";
 
@@ -1518,6 +2229,7 @@ document.addEventListener("click", e => {
   });
   else if (act === "delete-admin" && a) busy(btn, async () => {
     if (!confirm(`هل أنت متأكد من حذف المشرف الإداري (${a.name || a.email}) نهائياً؟`)) return;
+    if (!await requirePasswordConfirm(`تأكيد هويتك لحذف المشرف (${a.name || a.email}) نهائياً`)) return;
     await deleteDoc(doc(db, C.ADMINS, id));
     await logTo(null, "ADMIN_DELETED", `حذف المشرف الإداري (${a.name || a.email})`);
     toast("تم حذف المشرف بنجاح");
@@ -1577,6 +2289,23 @@ $("#v-save").onclick = e => busy(e.target, async () => {
   await logTo(null, "VERSION_UPDATED", `إصدار ${name} (كود ${code}، الحد الأدنى ${min}${force ? "، فرض التحديث" : ""})`);
   toast("تم حفظ إعدادات الإصدار بنجاح");
 });
+
+$("#maint-save").onclick = e => busy(e.target, async () => {
+  if (!S.isSuper) { toast("هذا الإجراء للمدير العام فقط", true); return; }
+  const enabled = $("#maint-toggle").checked;
+  const msg = $("#maint-msg").value.trim() || "التطبيق قيد الصيانة حالياً، سيتم فتحه قريباً جداً...";
+  if (enabled && !confirm("تأكيد: هذا سيقفل تطبيقات كل الوكلاء فوراً بدون استثناء. متابعة؟")) return;
+  if (!enabled && !(S.maint && S.maint.is_maintenance_mode) && !confirm("حفظ الرسالة بدون تفعيل القفل؟")) return;
+  if (enabled && !await requirePasswordConfirm("تأكيد هويتك لتفعيل قفل الصيانة الشامل لكل التطبيقات")) return;
+  await setDoc(doc(db, "system_control", "emergency"), {
+    is_maintenance_mode: enabled,
+    message: msg,
+    updated_at: serverTimestamp(),
+    updated_by: S.me.email
+  }, { merge: true });
+  await logTo(null, enabled ? "ACCOUNT_SUSPENDED" : "ACCOUNT_UNSUSPENDED", enabled ? `تفعيل قفل الطوارئ الشامل لكل الوكلاء: ${msg}` : "إلغاء قفل الطوارئ الشامل وإعادة تشغيل النظام", "ALL_AGENTS");
+  toast(enabled ? "تم قفل التطبيق لكل الوكلاء" : "تم إلغاء القفل، التطبيق يعمل الآن");
+});
   /* ===== إضافات: حذف التعميمات + تعديل/حذف/رفع تجميد الوكلاء ===== */
 const closeEditAgent = () => $("#edit-agent-modal").classList.add("hidden");
 $("#ea-cancel").onclick = closeEditAgent;
@@ -1617,6 +2346,7 @@ document.addEventListener("click", e => {
     if (!S.isSuper) { toast("حذف الوكلاء للمدير العام فقط", true); return; }
     const u = S.users.find(x => x.id === id); if (!u) return;
     if (!confirm(`حذف الوكيل ${u.email} نهائياً من قاعدة البيانات؟\nهذا الإجراء لا يمكن التراجع عنه.`)) return;
+    if (!await requirePasswordConfirm(`تأكيد هويتك لحذف الوكيل (${u.email}) نهائياً`)) return;
     const b = writeBatch(db);
     b.delete(doc(db, C.USERS, id));
     b.delete(doc(db, "app_subscriptions", id));
@@ -1637,6 +2367,24 @@ document.addEventListener("click", e => {
     $("#ea-status").value = (st === "SUSPENDED" || u.is_suspended) ? "SUSPENDED" : (st === "ACTIVE" ? "ACTIVE" : "EXPIRED");
     $("#ea-end").value = toDateInput(u.subscriptionEndsAt || u.subscription_expiry_timestamp || u.subscriptionExpiryAt);
     $("#edit-agent-modal").classList.remove("hidden");
+  }
+
+  else if (act === "void-card") busy(btn, async () => {
+    if (!S.isSuper) { toast("إلغاء الكرتات للمدير العام فقط", true); return; }
+    const k = S.cards.find(x => x.id === id); if (!k) return;
+    if (!confirm(`إلغاء الكرت ${k.id}؟ لن يقدر أي مستخدم يستخدمه بعد الآن.`)) return;
+    await updateDoc(doc(db, C.CARDS, id), { status: "REVOKED", voided_at: serverTimestamp(), voided_by: S.me.email });
+    await logTo(null, "LICENSE_CARD_VOIDED", `إلغاء كرت التفعيل ${id}`);
+    toast("تم إلغاء الكرت");
+  });
+
+  else if (act === "copy-card") {
+    const text = id;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => toast("تم نسخ الكود")).catch(() => toast("تعذر النسخ", true));
+    } else {
+      toast("النسخ غير مدعوم بهذا المتصفح", true);
+    }
   }
 });
 
@@ -1677,6 +2425,5 @@ $("#edit-agent-form").onsubmit = async e => {
   btn.disabled = false;
 };
 </script>
-<script src="ui.js"></script>
 </body>
 </html>
